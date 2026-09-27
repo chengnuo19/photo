@@ -45,7 +45,11 @@ npm run dev
 npm run build
 ```
 
-把 `dist/` 放到任何静态托管（Vercel、Netlify、GitHub Pages）即可。注意：每个人的书都只存在自己的浏览器里，**分享书请用导出**。
+把 `dist/` 放到任何静态托管（Vercel、Netlify、GitHub Pages）即可。
+
+本仓库已配置 GitHub Pages：每次推送到 `main`，`.github/workflows/deploy.yml` 会自动构建并发布到 https://chengnuo19.github.io/photo/ （站点在子目录下，构建时用环境变量 `BASE_PATH=/photo/`；本地开发不受影响）。
+
+想把送人的书也放到这个站点：把导出的 zip 解压到 `public/books/<名字>/`，推送后链接就是 `https://chengnuo19.github.io/photo/books/<名字>/`。注意：每个人的书都只存在自己的浏览器里，**分享书请用导出**。
 
 ## 结构
 

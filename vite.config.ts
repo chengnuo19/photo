@@ -20,6 +20,8 @@ function woff2Only(): { postcssPlugin: string; Declaration: (d: { prop: string; 
 
 export default defineConfig({
   plugins: [react() as Plugin[]],
+  // GitHub Pages serves the site under /photo/ (set in .github/workflows/deploy.yml); local dev stays at /
+  base: process.env.BASE_PATH ?? '/',
   server: { port: 5173 },
   css: { postcss: { plugins: [woff2Only()] } },
   build: {
