@@ -1,0 +1,319 @@
+/* Ghibli summer — clouds, hills, rain, summer wires */
+.theme {
+  --paper: #f6f3ea;
+  --paper-deep: #ede8da;
+  --paper-edge: #dcd4c0;
+  --board: #3f8fd8;
+  --ink: #3a3a36;
+  --ink-soft: #676357;
+  --ink-faint: #a09a88;
+  --accent: #3d8ed1;
+  --board-ink: #ffffff;
+  --sky-top: #3f8fd8;
+  --sky-bottom: #a8d6f2;
+  --print: #fbfaf4;
+  --room: #f7f6f1;
+  --font-display: 'LXGW WenKai', serif;
+  --font-hand: 'LXGW WenKai', serif;
+  --font-body: 'LXGW WenKai', serif;
+  --title-weight: 400;
+}
+
+.fill,
+.board {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ cel frame */
+.cel {
+  background: var(--print);
+  border-radius: 3cqw;
+  box-shadow:
+    0 0 0 0.4cqw rgba(0, 0, 0, 0.06),
+    0 0.8cqh 2cqh -0.6cqh rgba(40, 60, 80, 0.3);
+}
+
+.celWindow {
+  position: absolute;
+  inset: 3cqw;
+  border-radius: 2cqw;
+  overflow: hidden;
+  background: #cfe3ef;
+}
+
+.celDate {
+  position: absolute;
+  right: 5cqw;
+  bottom: 5cqw;
+  padding: 0.6cqw 2.4cqw;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.85);
+  font-family: 'LXGW WenKai', serif;
+  font-size: 4.4cqw;
+  color: #3a3a36;
+}
+
+/* ------------------------------------------------------------------ covers */
+.skyCover {
+  background: linear-gradient(var(--sky-top), var(--sky-bottom) 70%);
+}
+
+.coverCloud1 {
+  position: absolute;
+  left: 20%;
+  top: 12%;
+  width: 70cqw;
+  height: auto;
+}
+
+.coverCloud2 {
+  position: absolute;
+  left: -10%;
+  top: 30%;
+  width: 40cqw;
+  height: auto;
+  opacity: 0.9;
+}
+
+.hill1,
+.hill2 {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  border-radius: 50% 50% 0 0;
+}
+
+.hill1 {
+  bottom: -18%;
+  height: 46%;
+  background: #6aaa3f;
+}
+
+.hill2 {
+  bottom: -30%;
+  height: 44%;
+  left: 10%;
+  background: #4f8f2f;
+}
+
+.skyTitle {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 60%;
+  margin: 0;
+  text-align: center;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 8cqw;
+  letter-spacing: 0.1em;
+  color: #fff;
+  text-shadow: 0 0.4cqw 1.4cqw rgba(0, 40, 20, 0.35);
+}
+
+.skyLine {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 76%;
+  margin: 0;
+  text-align: center;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3.4cqw;
+  color: #f4fbef;
+}
+
+.rainCover {
+  background: linear-gradient(#7d8b91, #a6b2b6);
+}
+
+.rain {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(100deg, transparent 0 2.4cqw, rgba(255, 255, 255, 0.28) 2.4cqw 2.6cqw);
+}
+
+.coverStop {
+  position: absolute;
+  left: 18%;
+  top: 22%;
+  width: 20cqw;
+  height: auto;
+}
+
+.coverUmbrella {
+  position: absolute;
+  left: 46%;
+  top: 34%;
+  width: 34cqw;
+  height: auto;
+  rotate: 14deg;
+}
+
+.rainTitle {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 72%;
+  margin: 0;
+  text-align: center;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 7.6cqw;
+  color: #fff;
+}
+
+.rainKicker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 85%;
+  margin: 0;
+  text-align: center;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3.2cqw;
+  letter-spacing: 0.3em;
+  color: #eef3f4;
+}
+
+/* ------------------------------------------------------------------ pages */
+.titleCloud {
+  position: absolute;
+  left: 16%;
+  top: 14%;
+  width: 68cqw;
+  height: auto;
+  opacity: 0.9;
+  filter: drop-shadow(0 0.6cqw 1cqw rgba(60, 100, 140, 0.18));
+}
+
+.titleInner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqh;
+  padding: 0 12cqw;
+  text-align: center;
+}
+
+.kicker {
+  margin: 0;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3.2cqw;
+  letter-spacing: 0.4em;
+  color: var(--ink-soft);
+}
+
+.title {
+  margin: 0;
+  font-family: 'LXGW WenKai', serif;
+  font-weight: 400;
+  font-size: 8cqw;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.subtitle {
+  margin: 0;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3.4cqw;
+  color: var(--ink-soft);
+}
+
+.titleAcorn {
+  position: absolute;
+  right: 14%;
+  bottom: 16%;
+  width: 7cqw;
+  height: auto;
+  rotate: 16deg;
+}
+
+.dateLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8cqh;
+  margin: 0;
+  text-align: center;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+.finis {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqh;
+}
+
+.finis p {
+  margin: 0;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 4cqw;
+  letter-spacing: 0.2em;
+  color: var(--ink-soft);
+}
+
+.finisDandelion {
+  width: 16cqw;
+  height: auto;
+}
+
+/* ------------------------------------------------------------------ decorations */
+.decoCloud {
+  position: absolute;
+  height: auto;
+  filter: drop-shadow(0 0.6cqw 1cqw rgba(60, 100, 140, 0.2));
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  to {
+    transform: translateX(4cqw);
+  }
+}
+
+.wires {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 30%;
+}
+
+.meadow {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 46%;
+  height: auto;
+}
+
+.rainDecor {
+  position: absolute;
+  inset: -20% 0 0;
+  background: repeating-linear-gradient(100deg, transparent 0 2.6cqw, rgba(120, 150, 170, 0.28) 2.6cqw 2.8cqw);
+  animation: fall 1.2s linear infinite;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(20%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .decoCloud,
+  .rainDecor {
+    animation: none;
+  }
+}

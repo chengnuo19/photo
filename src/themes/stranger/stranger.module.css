@@ -1,0 +1,504 @@
+/* Stranger Things — 1980s small town & the Upside Down */
+.theme {
+  --paper: #14141c;
+  --paper-deep: #0f0f16;
+  --paper-edge: #262632;
+  --board: #0f0e14;
+  --ink: #e8e2d6;
+  --ink-soft: #b8b0a2;
+  --ink-faint: #7d7768;
+  --accent: #e3261b;
+  --glow-2: #ff6a3d;
+  --print: #f2eee6;
+  --tape: rgba(222, 210, 180, 0.6);
+  --room: #1e1c22;
+  --room-ink: #8f8a93;
+  --room-strong: #efe9e0;
+  --room-soft: #b5aea4;
+  --font-display: 'Noto Serif SC', serif;
+  --font-hand: 'LXGW WenKai', serif;
+  --font-body: 'LXGW WenKai', serif;
+  --title-weight: 900;
+  --title-color: transparent;
+  --title-stroke: 0.18cqw var(--accent);
+  --title-shadow: 0 0 1.2cqw var(--accent), 0 0 3cqw color-mix(in srgb, var(--accent) 55%, transparent);
+  --quote-color: var(--ink);
+  --pattern-floral: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cg opacity='0.5'%3E%3Cg transform='translate(60 60)'%3E%3Cellipse cy='-14' rx='7' ry='12' fill='%23d9a07c'/%3E%3Cellipse cy='-14' rx='7' ry='12' fill='%23d9a07c' transform='rotate(72)'/%3E%3Cellipse cy='-14' rx='7' ry='12' fill='%23d9a07c' transform='rotate(144)'/%3E%3Cellipse cy='-14' rx='7' ry='12' fill='%23d9a07c' transform='rotate(216)'/%3E%3Cellipse cy='-14' rx='7' ry='12' fill='%23d9a07c' transform='rotate(288)'/%3E%3Ccircle r='7' fill='%23b8704e'/%3E%3Cpath d='M-26 20 q13 -10 26 0' stroke='%238aa06f' stroke-width='4' fill='none'/%3E%3C/g%3E%3Cg transform='translate(180 180)'%3E%3Cellipse cy='-14' rx='7' ry='12' fill='%23c9a0b4'/%3E%3Cellipse cy='-14' rx='7' ry='12' fill='%23c9a0b4' transform='rotate(72)'/%3E%3Cellipse cy='-14' rx='7' ry='12' fill='%23c9a0b4' transform='rotate(144)'/%3E%3Cellipse cy='-14' rx='7' ry='12' fill='%23c9a0b4' transform='rotate(216)'/%3E%3Cellipse cy='-14' rx='7' ry='12' fill='%23c9a0b4' transform='rotate(288)'/%3E%3Ccircle r='7' fill='%23a0708a'/%3E%3Cpath d='M-26 20 q13 -10 26 0' stroke='%238aa06f' stroke-width='4' fill='none'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  --paper-pattern: none;
+}
+
+.theme :global(.paper) {
+  background-image:
+    radial-gradient(120% 90% at 50% 45%, transparent 50%, rgba(0, 0, 0, 0.22) 100%),
+    var(--paper-pattern),
+    var(--grain);
+  background-size: 100% 100%, 240px 240px, 220px 220px;
+}
+
+.fill,
+.board {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+.board {
+  background-color: var(--board);
+  box-shadow: inset 0 0 4cqw rgba(0, 0, 0, 0.5);
+}
+
+.dark {
+  --ink: #e8e2d6;
+  --ink-soft: #b8b0a2;
+  color: #e8e2d6;
+  background-color: var(--board) !important;
+}
+
+.wallpaper {
+  --ink: #141210;
+  background-color: #e8d7b0 !important;
+  background-image:
+    radial-gradient(120% 90% at 50% 45%, transparent 50%, rgba(60, 35, 15, 0.25) 100%),
+    var(--pattern-floral),
+    var(--grain) !important;
+  background-size: 100% 100%, 240px 240px, 220px 220px !important;
+}
+
+/* ------------------------------------------------------------------ glow title */
+.glowBlock,
+.titleInner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.4cqh;
+  padding: 0 10cqw;
+  text-align: center;
+}
+
+.glowBlock {
+  bottom: 18%;
+}
+
+.rule {
+  display: block;
+  width: 64cqw;
+  height: 0.35cqw;
+  background: var(--accent);
+  box-shadow: 0 0 1.2cqw var(--accent);
+}
+
+.glowTitle {
+  margin: 0;
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 900;
+  font-size: 9.6cqw;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  color: transparent;
+  -webkit-text-stroke: 0.22cqw var(--accent);
+  text-shadow:
+    0 0 1cqw var(--accent),
+    0 0 3.4cqw color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.glowKicker,
+.chapter {
+  margin: 0;
+  font-family: 'VT323', 'Noto Serif SC', monospace;
+  font-size: 4.2cqw;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  color: var(--ink-soft);
+}
+
+.coverLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12%;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 3.2cqw;
+  letter-spacing: 0.2em;
+  color: #b8b0a2;
+}
+
+.subtitle {
+  margin: 1cqh 0 0;
+  font-family: var(--font-hand);
+  font-size: 3.3cqw;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+
+.dateLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 9cqh;
+  margin: 0;
+  text-align: center;
+  font-family: 'VT323', monospace;
+  font-size: 3.6cqw;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------------ alphabet wall */
+.wall {
+  position: absolute;
+  inset: 9% 6% 9%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.wallRow {
+  position: relative;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+}
+
+.wire {
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  top: 0.8cqw;
+  height: 3cqw;
+  border-bottom: 0.3cqw solid #1d2a1d;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1cqh;
+}
+
+.wallBulb {
+  width: 4.4cqw;
+  height: auto;
+}
+
+.letter {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: 8cqw;
+  line-height: 1;
+  color: #141210;
+  opacity: 0.88;
+}
+
+.coverWall {
+  position: absolute;
+  inset: 0 0 26%;
+}
+
+.wallTitle {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 9%;
+  margin: 0;
+  padding: 2cqh 0;
+  text-align: center;
+  background: rgba(20, 18, 16, 0.86);
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 900;
+  font-size: 7cqw;
+  letter-spacing: 0.12em;
+  color: transparent;
+  -webkit-text-stroke: 0.2cqw #e3261b;
+  text-shadow: 0 0 1cqw #e3261b;
+}
+
+/* ------------------------------------------------------------------ notebook */
+.notebook {
+  position: absolute;
+  inset: 9% 10%;
+  background:
+    linear-gradient(90deg, transparent 13cqw, rgba(220, 70, 70, 0.55) 13cqw 13.3cqw, transparent 13.3cqw),
+    repeating-linear-gradient(transparent 0 7.4cqw, rgba(80, 120, 190, 0.35) 7.4cqw 7.6cqw),
+    #f6f3ea;
+  background-position: 0 0, 0 9cqw, 0 0;
+  color: #1f3a78;
+  transform: rotate(-1deg);
+  box-shadow: 0 1cqw 2.4cqw -0.6cqw rgba(0, 0, 0, 0.5);
+  container-type: size;
+}
+
+.holes {
+  position: absolute;
+  left: 4cqw;
+  top: 0;
+  bottom: 0;
+  width: 3cqw;
+  background: radial-gradient(circle, var(--paper) 45%, transparent 50%) 0 4cqh / 3cqw 22cqh repeat-y;
+}
+
+.notebookInner {
+  position: absolute;
+  inset: 0;
+  padding: 9cqw 8cqw 8cqw 16cqw;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-hand);
+}
+
+.nbTo {
+  margin: 0 0 3cqw;
+  font-size: 4.6cqw;
+  line-height: 7.5cqw;
+}
+
+.nbBody {
+  margin: 0;
+  white-space: pre-line;
+  font-size: 4.4cqw;
+  line-height: 7.5cqw;
+}
+
+.nbSign {
+  margin-top: auto;
+  align-self: flex-end;
+  text-align: right;
+  font-size: 4.4cqw;
+  line-height: 7.5cqw;
+}
+
+.nbSign p {
+  margin: 0;
+}
+
+.letterWalkie {
+  position: absolute;
+  right: 4%;
+  bottom: 3%;
+  width: 11cqw;
+  height: auto;
+  transform: rotate(14deg);
+}
+
+/* ------------------------------------------------------------------ finis & back */
+.finis {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4cqh;
+}
+
+.finis p {
+  margin: 0;
+  font-family: 'VT323', monospace;
+  font-size: 6cqw;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-shadow: 0 0 1cqw var(--accent);
+}
+
+.finisBulb {
+  width: 9cqw;
+  height: auto;
+}
+
+.backLines {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 26%;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 4.4cqw;
+  line-height: 1.9;
+  letter-spacing: 0.16em;
+}
+
+.backLines p {
+  margin: 0;
+}
+
+.streetlight {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 60cqw;
+  height: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(50% 70% at 50% 100%, rgba(255, 214, 130, 0.42), rgba(255, 190, 110, 0.12) 55%, transparent 75%);
+}
+
+.backBike {
+  position: absolute;
+  left: 32%;
+  bottom: 10%;
+  width: 36cqw;
+  height: auto;
+}
+
+.backBike path,
+.backBike circle,
+.backBike rect {
+  stroke: #000;
+}
+
+/* ------------------------------------------------------------------ spores & decorations */
+.spores {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.spores i {
+  position: absolute;
+  display: block;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(232, 220, 207, 0.55);
+  animation: drift 12s linear infinite;
+}
+
+@keyframes drift {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(4cqw, -18cqh);
+    opacity: 0;
+  }
+}
+
+.lightString {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 16%;
+}
+
+.lightWire {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.lightString :global(.mb-anim),
+.wallBulb:global(.mb-anim),
+.finisBulb:global(.mb-anim) {
+  animation: twinkle 3.2s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1.1);
+  }
+  45% {
+    opacity: 0.55;
+    filter: brightness(0.8);
+  }
+}
+
+.vhs {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(transparent 0 0.5cqh, rgba(0, 0, 0, 0.12) 0.5cqh 0.8cqh);
+  mix-blend-mode: multiply;
+}
+
+.tracking {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3cqh;
+  background: linear-gradient(transparent, rgba(255, 255, 255, 0.18), transparent);
+  animation: track 7s linear infinite;
+}
+
+@keyframes track {
+  from {
+    top: -5%;
+  }
+  to {
+    top: 105%;
+  }
+}
+
+.play {
+  position: absolute;
+  left: 5%;
+  top: 4%;
+  font-family: 'VT323', monospace;
+  font-size: 4.4cqw;
+  color: #f2f2f2;
+  text-shadow: 0 0 0.6cqw rgba(255, 255, 255, 0.6);
+  mix-blend-mode: normal;
+}
+
+.vinesBL,
+.vinesBR {
+  position: absolute;
+  bottom: -3%;
+  width: 42cqw;
+  height: auto;
+  filter: drop-shadow(0 0.4cqw 0.6cqw rgba(0, 0, 0, 0.45));
+}
+
+.vinesBL {
+  left: -3%;
+}
+
+.vinesBR {
+  right: -3%;
+  transform: scaleX(-1);
+}
+
+.bolt {
+  position: absolute;
+  top: -1%;
+  width: 20cqw;
+  height: auto;
+  filter: drop-shadow(0 0 1.2cqw rgba(255, 43, 43, 0.8));
+}
+
+.rec {
+  position: absolute;
+  left: 5cqw;
+  top: 4cqw;
+  z-index: 4;
+  font-family: 'VT323', monospace;
+  font-size: 7cqw;
+  letter-spacing: 0.08em;
+  color: #f4f4f4;
+  text-shadow: 0 0 0.8cqw rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+
+.rec b {
+  color: #ff2b2b;
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spores i,
+  .tracking,
+  .lightString :global(.mb-anim),
+  .wallBulb:global(.mb-anim),
+  .finisBulb:global(.mb-anim) {
+    animation: none;
+  }
+}

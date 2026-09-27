@@ -1,0 +1,310 @@
+/* Minimal gallery catalogue */
+.theme {
+  --paper: #f5f3ee;
+  --paper-deep: #eceae4;
+  --paper-edge: #dcd9d1;
+  --board: #f1efe9;
+  --ink: #222222;
+  --ink-soft: #555350;
+  --ink-faint: #9a968e;
+  --accent: #d42a1f;
+  --mat: #fbfaf7;
+  --hair: rgba(0, 0, 0, 0.18);
+  --print: #fbfaf7;
+  --room: #f7f6f3;
+  --font-display: 'Cormorant Garamond', 'Noto Serif SC', serif;
+  --font-hand: 'Cormorant Garamond', 'Noto Serif SC', serif;
+  --font-body: 'Noto Serif SC', serif;
+  --title-weight: 300;
+  --photo-shadow: 0 0.2cqh 0.6cqh rgba(0, 0, 0, 0.08);
+}
+
+/* museum paper: barely any texture, no vignette */
+.theme :global(.paper) {
+  background-image: var(--grain);
+  background-size: 220px 220px;
+}
+
+.fill,
+.board {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+.board {
+  background-color: var(--board);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.hair {
+  display: block;
+  width: 14cqw;
+  height: 1px;
+  background: var(--ink);
+  opacity: 0.6;
+}
+
+/* ------------------------------------------------------------------ mat frame */
+.mat {
+  background: var(--mat);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.05),
+    0 0.3cqh 1cqh -0.2cqh rgba(0, 0, 0, 0.1);
+}
+
+.matWindow {
+  position: absolute;
+  inset: 9cqw 9cqw 13cqw;
+  overflow: hidden;
+  background: #ddd;
+  box-shadow: inset 0 0 0 1px var(--hair);
+}
+
+.plate {
+  position: absolute;
+  left: 9cqw;
+  bottom: 4cqw;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 5cqw;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ covers */
+.coverPlate {
+  left: 18%;
+  right: 18%;
+  top: 12%;
+  height: 54%;
+}
+
+.coverTitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 73%;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 6cqw;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+}
+
+.coverMeta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 82%;
+  margin: 0;
+  text-align: center;
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', serif;
+  font-size: 2.8cqw;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  color: var(--ink-faint);
+}
+
+.bigNum {
+  position: absolute;
+  left: 10%;
+  top: 7%;
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: 30cqw;
+  line-height: 1;
+  color: var(--ink);
+  opacity: 0.1;
+}
+
+.typeBlock {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 14%;
+  display: flex;
+  flex-direction: column;
+  gap: 3cqh;
+}
+
+.typeTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 10cqw;
+  line-height: 1.15;
+  letter-spacing: 0.08em;
+}
+
+.typeLine {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 3.2cqw;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+
+.typeMeta {
+  margin: 0;
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', serif;
+  font-size: 2.8cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ title (catalogue) */
+.catalogue {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 30%;
+  display: flex;
+  flex-direction: column;
+  gap: 3.4cqh;
+}
+
+.cKicker {
+  margin: 0;
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', serif;
+  font-size: 2.8cqw;
+  letter-spacing: 0.5em;
+  color: var(--ink-faint);
+}
+
+.cTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 8.4cqw;
+  line-height: 1.3;
+  letter-spacing: 0.12em;
+}
+
+.cSub {
+  margin: 0;
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', serif;
+  font-style: italic;
+  font-size: 3.6cqw;
+  color: var(--ink-soft);
+}
+
+.colophon {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 10%;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', serif;
+  font-size: 2.6cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ finis & back */
+.finis {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 14cqw 16cqh;
+}
+
+.fin {
+  margin: 0 0 3cqh;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 9cqw;
+}
+
+.finMeta {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 2.8cqw;
+  line-height: 2;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+}
+
+.backLines {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 22%;
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 3.8cqw;
+  line-height: 2;
+  letter-spacing: 0.14em;
+}
+
+.backLines p {
+  margin: 0;
+}
+
+.backMeta {
+  position: absolute;
+  left: 14%;
+  bottom: 10%;
+  margin: 0;
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', serif;
+  font-size: 2.6cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ decorations */
+.running,
+.folio {
+  position: absolute;
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', serif;
+  font-size: 2.3cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+.running {
+  top: 4%;
+}
+
+.folio {
+  bottom: 3.6%;
+  font-style: italic;
+  letter-spacing: 0.12em;
+}
+
+.label {
+  position: absolute;
+  right: 7%;
+  bottom: 5%;
+  width: 34cqw;
+  padding: 2.6cqw 3cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8cqh;
+  background: var(--mat);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 0.4cqh 1cqh -0.4cqh rgba(0, 0, 0, 0.2);
+  font-family: var(--font-body);
+  font-size: 2.2cqw;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+.label b {
+  font-weight: 600;
+  font-size: 2.6cqw;
+  color: var(--ink);
+}
+
+.inset {
+  position: absolute;
+  inset: 3.4%;
+  border: 1px solid var(--hair);
+}

@@ -1,0 +1,86 @@
+/* ------------------------------------------------------------------ tokens */
+:root {
+  /* room */
+  --room: #fbfaf7;
+  --room-ink: #8d867b;
+  /* chrome on the room (menus, captions, strip) — never the page ink, which palettes may lighten */
+  --room-strong: #3d372f;
+  --room-soft: #6f675b;
+
+  /* paper */
+  --paper: #f6f1e7;
+  --paper-deep: #efe8da;
+  --paper-edge: #e3dac8;
+  --paper-line: #d8ceb9;
+  --ink: #3b352e;
+  --ink-soft: #6f675b;
+  --ink-faint: #a39a8b;
+  --accent: #d9776f;
+
+  /* type */
+  --font-serif: 'Cormorant Garamond', 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+  --font-cn: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+  --font-hand: 'LXGW WenKai', 'Kaiti SC', 'STKaiti', 'KaiTi', serif;
+
+  /* motion */
+  --ease-page: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* paper grain: tiny fractal noise, tinted warm */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.33 0 0 0 0 0.22 0 0 0 0.11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* long soft fibres */
+  --fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004 0.06' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.45 0 0 0 0 0.3 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+}
+
+/* ------------------------------------------------------------------ base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--room);
+  color: var(--ink);
+  font-family: var(--font-cn);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 1.5px solid var(--ink-soft);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Paper surface shared by every page. */
+.paper {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(175, 145, 95, 0.09) 100%),
+    var(--grain),
+    var(--fibre);
+  background-size: 100% 100%, 220px 220px, 600px 600px;
+}

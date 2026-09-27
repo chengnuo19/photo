@@ -1,0 +1,85 @@
+/* a checked picnic blanket on grass */
+.grass {
+  background:
+    var(--grain),
+    repeating-linear-gradient(0deg, transparent 0 40px, color-mix(in srgb, var(--room) 88%, #e3321f) 40px 80px),
+    repeating-linear-gradient(90deg, transparent 0 40px, color-mix(in srgb, var(--room) 88%, #e3321f) 40px 80px),
+    var(--room);
+  background-size: 220px, auto, auto, auto;
+  background-blend-mode: normal, multiply, multiply, normal;
+}
+
+.grass::after {
+  /* the grass shows through at the edges */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(90% 80% at 50% 45%, transparent 60%, color-mix(in srgb, #63b14a 45%, transparent) 100%);
+}
+
+.tuft {
+  position: absolute;
+  z-index: 1;
+  width: 90px;
+  translate: -50% -50%;
+  transform-origin: 50% 100%;
+  animation: rustle 5s ease-in-out infinite;
+}
+
+@keyframes rustle {
+  0%,
+  100% {
+    transform: skewX(0);
+  }
+  8% {
+    transform: skewX(-8deg);
+  }
+  16% {
+    transform: skewX(5deg);
+  }
+  24% {
+    transform: skewX(0);
+  }
+}
+
+.ball {
+  transform-origin: 70px 130px;
+}
+
+.ballEgg[data-play] .ball {
+  animation: wobble 1.5s ease-in-out;
+}
+
+.ballEgg[data-play] .button {
+  animation: shut 2.5s steps(1) both;
+}
+
+@keyframes wobble {
+  0%,
+  33%,
+  66%,
+  100% {
+    transform: rotate(0);
+  }
+  10%,
+  43%,
+  76% {
+    transform: rotate(-14deg);
+  }
+  20%,
+  53%,
+  86% {
+    transform: rotate(10deg);
+  }
+}
+
+@keyframes shut {
+  0%,
+  60% {
+    fill: #ff5a4a;
+  }
+  61%,
+  100% {
+    fill: #fff;
+  }
+}

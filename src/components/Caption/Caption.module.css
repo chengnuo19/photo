@@ -1,0 +1,59 @@
+.caption {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + max(20px, 2.8vh));
+  transform: translate(-50%, 3px);
+  width: min(88%, 720px);
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.3em 1.4em;
+  text-align: center;
+  color: var(--room-ink);
+  opacity: 0;
+  transition:
+    opacity 260ms var(--ease-out),
+    transform 260ms var(--ease-out);
+  pointer-events: none;
+}
+
+.caption[data-show] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-duration: 700ms;
+  transition-delay: 120ms;
+}
+
+.text {
+  font-family: var(--font-cn);
+  font-size: clamp(12px, 1.05vw, 14.5px);
+  letter-spacing: 0.14em;
+}
+
+.caption[data-hand] .text {
+  font-family: var(--font-hand);
+  font-size: clamp(13px, 1.15vw, 16px);
+}
+
+.stamp {
+  font-family: var(--font-hand);
+  font-size: clamp(11px, 0.9vw, 12.5px);
+  letter-spacing: 0.22em;
+  color: var(--room-ink);
+}
+
+@media (max-width: 719px) {
+  .caption {
+    width: calc(100vw - 48px);
+  }
+}
+
+.caption[data-editing] {
+  pointer-events: auto;
+}
+
+.caption[data-editing]:not([data-show]) {
+  pointer-events: none;
+}

@@ -1,0 +1,75 @@
+/* dark oak table fading into the room colour, warm candlelight from above */
+.hall {
+  background:
+    var(--grain),
+    var(--wood),
+    radial-gradient(70% 60% at 50% 45%, rgba(255, 214, 140, 0.25), transparent 70%),
+    radial-gradient(120% 100% at 50% 45%, var(--room) 40%, color-mix(in srgb, var(--room) 74%, #3e2412) 100%);
+  background-size: 220px, 2400px 220px, 100% 100%, 100% 100%;
+}
+
+/* candles floating along both sides */
+.float {
+  position: absolute;
+  aspect-ratio: 1 / 4.4;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #efe6cf, #fffaf0 40%, #d8ccb0);
+  box-shadow: 0 16px 20px -6px rgba(60, 40, 10, 0.25);
+  animation: bob 6s ease-in-out infinite;
+}
+
+.float i {
+  position: absolute;
+  left: 50%;
+  top: -60%;
+  width: 70%;
+  aspect-ratio: 1 / 1.8;
+  translate: -50% 0;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 50% 70%, #fff6d0 0 25%, #ffc450 55%, rgba(255, 170, 60, 0) 72%);
+  box-shadow: 0 0 22px 10px rgba(255, 190, 90, 0.35);
+  animation: flame 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes flame {
+  to {
+    transform: scaleY(1.12) skewX(3deg);
+    opacity: 0.88;
+  }
+}
+
+.envelope {
+  transform-origin: 130px 90px;
+}
+
+.letterEgg[data-play] .envelope {
+  animation: flutter 2.5s ease-in-out;
+}
+
+@keyframes flutter {
+  15% {
+    transform: translate(10px, -24px) rotate(-6deg) scale(1.05);
+  }
+  30% {
+    transform: translate(-6px, -40px) rotate(5deg) scale(1.08);
+  }
+  45% {
+    transform: translate(8px, -30px) rotate(-4deg) scale(1.06);
+  }
+  60% {
+    transform: translate(-4px, -38px) rotate(3deg) scale(1.07);
+  }
+  100% {
+    transform: none;
+  }
+}

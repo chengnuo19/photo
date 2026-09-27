@@ -1,0 +1,480 @@
+/* Wednesday — gothic boarding school */
+.theme {
+  --paper: #d9d6d0;
+  --paper-deep: #cbc8c1;
+  --paper-edge: #b6b2a9;
+  --board: #d4d1ca;
+  --ink: #151515;
+  --ink-soft: #444240;
+  --ink-faint: #817d77;
+  --accent: #5b1520;
+  --frame: #121212;
+  --print: #121212;
+  --tape: rgba(20, 20, 20, 0.75);
+  --room: #efeeeb;
+  --room-ink: #7c7a76;
+  --font-display: 'UnifrakturMaguntia', 'Noto Serif SC', serif;
+  --font-hand: 'Special Elite', 'Noto Serif SC', serif;
+  --font-body: 'Noto Serif SC', serif;
+  --title-weight: 600;
+  --endpaper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cg fill='none' stroke='%23000' stroke-opacity='0.12' stroke-width='0.8'%3E%3Cpath d='M100 100 L100 0 M100 100 L200 100 M100 100 L100 200 M100 100 L0 100 M100 100 L170 30 M100 100 L170 170 M100 100 L30 170 M100 100 L30 30'/%3E%3Cpolygon points='100,70 121,79 130,100 121,121 100,130 79,121 70,100 79,79'/%3E%3Cpolygon points='100,45 139,61 155,100 139,139 100,155 61,139 45,100 61,61'/%3E%3Cpolygon points='100,20 157,43 180,100 157,157 100,180 43,157 20,100 43,43'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* the "black & white photos" decoration desaturates this spread's pictures */
+:global([data-decor='mono']) img {
+  filter: grayscale(1) contrast(1.08) brightness(0.97);
+}
+
+.fill,
+.board {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+.board {
+  background-color: var(--board);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1),
+    inset 0 0 4cqw rgba(0, 0, 0, 0.22);
+}
+
+/* ------------------------------------------------------------------ frame */
+.frame {
+  background: var(--frame);
+  box-shadow: 0 0.4cqh 1.2cqh rgba(0, 0, 0, 0.35);
+}
+
+.frameWindow {
+  position: absolute;
+  inset: 3.4cqw;
+  overflow: hidden;
+  background: #555;
+  outline: 1px solid rgba(255, 255, 255, 0.35);
+  outline-offset: -1.6cqw;
+}
+
+.web {
+  position: absolute;
+  width: 26cqw;
+  height: auto;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.webTL {
+  left: -1px;
+  top: -1px;
+}
+
+.webTR {
+  right: -1px;
+  top: -1px;
+  transform: scaleX(-1);
+}
+
+.webBL {
+  left: -1px;
+  bottom: -1px;
+  transform: scaleY(-1);
+}
+
+.webBR {
+  right: -1px;
+  bottom: -1px;
+  transform: scale(-1, -1);
+}
+
+.frame .web path,
+.frame .web line {
+  stroke: #d8d4cc;
+}
+
+.imprint {
+  position: absolute;
+  left: 4cqw;
+  bottom: 4cqw;
+  z-index: 4;
+  padding: 0.8cqw 2.4cqw;
+  background: #efece6;
+  color: #151515;
+  font-family: 'Special Elite', monospace;
+  font-size: 4.6cqw;
+  letter-spacing: 0.2em;
+  transform: rotate(-2deg);
+  box-shadow: 0 0.4cqw 0.8cqw rgba(0, 0, 0, 0.3);
+}
+
+/* ------------------------------------------------------------------ covers */
+.coverWeb {
+  position: absolute;
+  width: 22cqw;
+  height: auto;
+  opacity: 0.8;
+}
+
+.coverKicker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 12%;
+  margin: 0;
+  text-align: center;
+  font-family: 'Special Elite', 'Noto Serif SC', serif;
+  font-size: 3cqw;
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+}
+
+.crest {
+  position: absolute;
+  left: 30%;
+  top: 22%;
+  width: 40cqw;
+  height: auto;
+}
+
+.coverTitle {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 66%;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 7.6cqw;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+}
+
+.coverLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 80%;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 3cqw;
+  letter-spacing: 0.2em;
+  color: var(--ink-soft);
+}
+
+.stripes {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 50%;
+  background: repeating-linear-gradient(90deg, #121212 0 5.5cqw, #ebe8e1 5.5cqw 11cqw);
+  box-shadow: 0 0.6cqw 0 #121212;
+}
+
+.stripesCrow {
+  position: absolute;
+  left: 58%;
+  top: 38.5%;
+  width: 22cqw;
+  height: auto;
+}
+
+.stripesTitle {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 60%;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 8cqw;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+}
+
+.stripesKicker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 74%;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 3cqw;
+  letter-spacing: 0.4em;
+  color: var(--ink-soft);
+}
+
+.stripesRose {
+  position: absolute;
+  left: 44%;
+  top: 80%;
+  width: 12cqw;
+  height: auto;
+  transform: rotate(-70deg);
+}
+
+/* ------------------------------------------------------------------ title */
+.titleInner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 12cqw;
+}
+
+.titleSpider {
+  position: absolute;
+  left: 72%;
+  top: 0;
+  width: 10cqw;
+  height: auto;
+}
+
+.kicker {
+  margin: 0 0 3cqh;
+  font-family: var(--font-hand);
+  font-size: 3cqw;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  color: var(--ink-soft);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 8.4cqw;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+}
+
+.subtitle {
+  margin: 4cqh 0 0;
+  font-family: var(--font-hand);
+  font-size: 3.2cqw;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+
+.titleRose {
+  margin-top: 7cqh;
+  width: 9cqw;
+  height: auto;
+  transform: rotate(-12deg);
+}
+
+.dateLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 9cqh;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 2.6cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ typed note */
+.note {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  top: 30%;
+  padding: 8cqw 7cqw;
+  background: #efece6;
+  color: #151515;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 1cqw 2.4cqw -0.6cqw rgba(0, 0, 0, 0.45);
+}
+
+.pin {
+  position: absolute;
+  left: 50%;
+  top: 2.4cqw;
+  width: 3.6cqw;
+  height: 3.6cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #7a1c28, #3c0a12 70%);
+  box-shadow: 0 0.6cqw 0.8cqw rgba(0, 0, 0, 0.4);
+}
+
+.noteTo {
+  margin: 0 0 3cqh;
+  font-family: 'Special Elite', 'Noto Serif SC', serif;
+  font-size: 3cqw;
+  letter-spacing: 0.14em;
+  color: #444;
+}
+
+.noteBody {
+  margin: 0;
+  white-space: pre-line;
+  font-family: 'Special Elite', 'Noto Serif SC', serif;
+  font-size: 3.8cqw;
+  line-height: 2;
+  letter-spacing: 0.06em;
+}
+
+/* ------------------------------------------------------------------ letter */
+.letter {
+  position: absolute;
+  inset: 0;
+  padding: 13cqh 13cqw 12cqh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+}
+
+.lHi {
+  margin: 0 0 1em;
+  font-size: 3.8cqw;
+}
+
+.lBody {
+  margin: 0;
+  white-space: pre-line;
+  font-size: 3.6cqw;
+  line-height: 2.1;
+}
+
+.lSign {
+  margin-top: auto;
+  align-self: flex-end;
+  text-align: right;
+  font-family: var(--font-hand);
+  font-size: 3.6cqw;
+}
+
+.lSign p {
+  margin: 0;
+}
+
+.lDate {
+  font-size: 2.8cqw;
+  color: var(--ink-faint);
+}
+
+.seal {
+  position: absolute;
+  left: 13cqw;
+  bottom: 9cqh;
+  width: 13cqw;
+  height: 13cqw;
+  display: grid;
+  place-items: center;
+  border-radius: 46% 54% 50% 50% / 52% 48% 52% 48%;
+  background: radial-gradient(circle at 38% 34%, #3a3a3a, #0c0c0c 72%);
+  box-shadow:
+    0 0 0 1.2cqw #111,
+    0 0.8cqw 1.2cqw rgba(0, 0, 0, 0.4);
+  font-family: 'UnifrakturMaguntia', serif;
+  font-size: 7cqw;
+  color: #6b6b6b;
+}
+
+/* ------------------------------------------------------------------ finis & back */
+.finis {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqh;
+}
+
+.finis p {
+  margin: 0;
+  font-family: 'UnifrakturMaguntia', serif;
+  font-size: 9cqw;
+}
+
+.finisCandle {
+  width: 24cqw;
+  height: auto;
+}
+
+.backCrest {
+  position: absolute;
+  left: 40%;
+  top: 22%;
+  width: 20cqw;
+  height: auto;
+}
+
+.backLines {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48%;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 4cqw;
+  line-height: 1.9;
+  letter-spacing: 0.14em;
+}
+
+.backLines p {
+  margin: 0;
+}
+
+.backSig {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 9%;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 2.6cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ decorations */
+.edgeStripes {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5cqw;
+  background: repeating-linear-gradient(180deg, #121212 0 3cqw, #ebe8e1 3cqw 6cqw);
+  opacity: 0.92;
+}
+
+.edgeStripes[data-side='left'] {
+  left: 0;
+}
+
+.edgeStripes[data-side='right'],
+.edgeStripes[data-side='single'] {
+  right: 0;
+}
+
+.pageWeb {
+  position: absolute;
+  width: 22cqw;
+  height: auto;
+  opacity: 0.75;
+}
+
+.decoCrow {
+  position: absolute;
+  top: 1.5%;
+  width: 16cqw;
+  height: auto;
+}
+
+.drips {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 9cqh;
+}

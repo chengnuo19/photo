@@ -1,0 +1,44 @@
+/* a matte desk in the room's colour, a little darker towards the edges */
+.desk {
+  background:
+    var(--grain),
+    radial-gradient(110% 90% at 50% 45%, var(--room) 50%, color-mix(in srgb, var(--room) 84%, #3a2a1e) 100%);
+  background-size: 220px, 100% 100%;
+}
+
+/* a light table glowing in the lower-left corner */
+.lightTable {
+  position: absolute;
+  left: -6vw;
+  bottom: -8vh;
+  width: max(34vw, 360px);
+  height: max(46vh, 320px);
+  border-radius: 10px;
+  background:
+    linear-gradient(90deg, transparent 49.6%, rgba(160, 150, 130, 0.25) 49.6% 50.4%, transparent 50.4%),
+    radial-gradient(80% 70% at 50% 50%, #fffef6, #f4f0e2 70%, #e6e0cc);
+  box-shadow:
+    0 0 0 10px color-mix(in srgb, var(--room) 70%, #2a241d),
+    0 0 80px 20px rgba(255, 250, 225, 0.55);
+  rotate: -6deg;
+  animation: hum 7s ease-in-out infinite;
+}
+
+@keyframes hum {
+  50% {
+    opacity: 0.94;
+  }
+}
+
+.canEgg[data-play] > svg {
+  animation: roll 1.3s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+@keyframes roll {
+  40% {
+    transform: translateX(-24%) rotate(-50deg);
+  }
+  100% {
+    transform: none;
+  }
+}

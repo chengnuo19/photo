@@ -1,0 +1,41 @@
+/* an old folded map under everything, softened into the room colour */
+.table {
+  background:
+    var(--grain),
+    linear-gradient(90deg, transparent 33.2%, rgba(120, 90, 50, 0.07) 33.3%, transparent 33.6%, transparent 66.5%, rgba(120, 90, 50, 0.07) 66.6%, transparent 66.9%),
+    linear-gradient(0deg, transparent 49.8%, rgba(120, 90, 50, 0.06) 50%, transparent 50.3%),
+    var(--map),
+    radial-gradient(110% 90% at 50% 45%, var(--room) 45%, color-mix(in srgb, var(--room) 86%, #9c7a4a) 100%);
+  background-size: 220px, 100% 100%, 100% 100%, 900px 700px, 100% 100%;
+}
+
+.needle {
+  transform-origin: 100px 100px;
+  transform: rotate(-18deg);
+  transition: transform 300ms;
+}
+
+.compassEgg[data-play] .needle {
+  animation: swing 2.3s cubic-bezier(0.2, 0.6, 0.3, 1);
+}
+
+@keyframes swing {
+  0% {
+    transform: rotate(-18deg);
+  }
+  20% {
+    transform: rotate(160deg);
+  }
+  40% {
+    transform: rotate(-70deg);
+  }
+  60% {
+    transform: rotate(30deg);
+  }
+  78% {
+    transform: rotate(-30deg);
+  }
+  100% {
+    transform: rotate(-18deg);
+  }
+}

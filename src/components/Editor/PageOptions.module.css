@@ -1,0 +1,122 @@
+.row {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  z-index: 26;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  max-width: calc(100vw - 32px);
+}
+
+@media (max-width: 719px) {
+  .row {
+    bottom: 92px;
+    row-gap: 0;
+  }
+
+  .k,
+  .note {
+    display: none;
+  }
+}
+
+.group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.k {
+  margin-right: 2px;
+  font-family: var(--font-hand);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--room-ink);
+}
+
+.note {
+  margin-left: 8px;
+  font-family: var(--font-hand);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--room-ink);
+}
+
+.layout {
+  display: inline-grid;
+  place-items: center;
+  padding: 4px 3px;
+  border: 0;
+  background: none;
+  color: var(--room-ink);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.layout:hover {
+  opacity: 1;
+  color: var(--room-strong);
+}
+
+.layout[data-active] {
+  opacity: 1;
+  color: var(--room-strong);
+  transform: translateY(-2px);
+}
+
+.trayWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.tray {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: 300px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #fdfcf9;
+  box-shadow:
+    0 0 0 1px rgba(120, 100, 70, 0.1),
+    0 12px 28px -10px rgba(60, 40, 20, 0.28);
+}
+
+.stickerGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.sticker {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  border: 0;
+  border-radius: 3px;
+  background: #f3efe6;
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.sticker:hover {
+  background: #ebe4d6;
+  transform: scale(1.06);
+}
+
+.stickerArt {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

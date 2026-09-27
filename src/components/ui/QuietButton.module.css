@@ -1,0 +1,51 @@
+.q {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 0;
+  background: none;
+  font-family: var(--font-cn);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--room-ink);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+
+@media (max-width: 719px) {
+  .q {
+    padding: 6px 5px;
+    letter-spacing: 0.08em;
+  }
+}
+
+.q:hover,
+.q[data-active] {
+  color: var(--room-strong);
+}
+
+.q[data-active]::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 2px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.q:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dot {
+  color: var(--room-ink);
+  opacity: 0.5;
+  font-size: 12px;
+}

@@ -1,0 +1,118 @@
+.scene {
+  --mx: 0;
+  --my: 0;
+  --side: 140px;
+  --top: 80px;
+  --bottom: 100px;
+  --page-h: 700px;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* stays under the stage, masthead and editor chrome */
+  z-index: 0;
+  contain: strict;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+.prop {
+  position: absolute;
+  --lift: calc(var(--depth) * var(--depth) * 5px + 2px);
+  transform: translate3d(calc(var(--mx) * var(--lift) * -1), calc(var(--my) * var(--lift) * -1), 0) rotate(var(--rot));
+  transition: transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.prop > :global(svg),
+.egg > :global(svg) {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* things lying on the table cast the same warm shadow as the book */
+.prop[data-depth='0'] {
+  filter: drop-shadow(0 6px 8px rgba(40, 28, 16, 0.22)) drop-shadow(0 1px 1px rgba(40, 28, 16, 0.18));
+}
+
+.prop[data-depth='1'] {
+  filter: drop-shadow(0 12px 16px rgba(40, 28, 16, 0.24));
+}
+
+/* out-of-focus foreground */
+.prop[data-depth='2'] {
+  filter: blur(3px) drop-shadow(0 18px 22px rgba(40, 28, 16, 0.2));
+  opacity: 0.94;
+}
+
+.prop[data-tier='2'] {
+  display: none;
+}
+
+.prop[data-tier='3'] {
+  display: none;
+}
+
+@media (min-width: 1180px) and (min-height: 640px) {
+  .prop[data-tier='2'] {
+    display: block;
+  }
+}
+
+@media (min-width: 1500px) and (min-height: 800px) {
+  .prop[data-tier='3'] {
+    display: block;
+  }
+}
+
+/* phones / portrait: only the few props flagged for it, smaller and further out */
+.scene[data-portrait] .prop:not([data-mobile]) {
+  display: none;
+}
+
+.scene[data-portrait] .prop[data-mobile] {
+  display: block;
+  scale: 0.72;
+}
+
+.egg {
+  all: unset;
+  position: relative;
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 300ms;
+}
+
+.egg:hover {
+  filter: brightness(1.06) drop-shadow(0 0 10px rgba(255, 240, 200, 0.35));
+}
+
+.egg:focus-visible {
+  outline: 2px dashed currentColor;
+  outline-offset: 6px;
+  border-radius: 8px;
+}
+
+/* ambient animation classes shared by scenes */
+.scene :global(.sc-anim) {
+  animation-play-state: running;
+}
+
+.scene[data-reduced] *,
+.scene[data-reduced] *::before,
+.scene[data-reduced] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* the editor keeps only a quieter backdrop */
+.scene[data-mode='edit'] .backdrop {
+  opacity: 0.7;
+}

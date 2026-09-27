@@ -1,0 +1,26 @@
+.host {
+  position: absolute;
+  inset: 0;
+}
+
+.root {
+  position: absolute !important;
+  left: 0;
+  top: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* One physical page. The engine sets position/size/transform/clip-path inline. */
+.page {
+  overflow: hidden;
+  cursor: pointer;
+  backface-visibility: hidden;
+}
+
+.page img {
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+}

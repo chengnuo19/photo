@@ -1,0 +1,399 @@
+/* Wizard school — parchment, gold, wax and candlelight */
+.theme {
+  --paper: #efe0bd;
+  --paper-deep: #e4d2a8;
+  --paper-edge: #cdb584;
+  --board: #3a2614;
+  --ink: #3a2614;
+  --ink-soft: #6a4f34;
+  --ink-faint: #9a8260;
+  --accent: #7a1b1b;
+  --gold: #b8912a;
+  --board-ink: #e7cd7a;
+  --print: #f6ecd2;
+  --tape: rgba(184, 145, 42, 0.35);
+  --room: #f5f0e6;
+  --font-display: 'Cinzel Decorative', 'Ma Shan Zheng', serif;
+  --font-hand: 'LXGW WenKai', serif;
+  --font-body: 'LXGW WenKai', serif;
+  --title-weight: 400;
+  --title-color: var(--accent);
+  --paper-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='4' seed='8'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.3 0 0 0 0 0.12 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+}
+
+/* parchment: mottled, darker at the edges */
+.theme :global(.paper) {
+  background-image:
+    radial-gradient(110% 90% at 50% 45%, transparent 45%, rgba(110, 70, 25, 0.28) 100%),
+    var(--paper-pattern),
+    var(--grain);
+  background-size: 100% 100%, 240px 240px, 220px 220px;
+}
+
+.fill,
+.board {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ ornate frame */
+.ornate {
+  background: linear-gradient(135deg, #8a6a1f, #e7cd7a 30%, #9a7a2a 50%, #e7cd7a 70%, #7a5a18);
+  box-shadow:
+    inset 0 0 0 0.6cqw rgba(60, 40, 10, 0.5),
+    0 1cqh 2.4cqh -0.8cqh rgba(40, 25, 10, 0.55);
+}
+
+.ornateWindow {
+  position: absolute;
+  inset: 5cqw;
+  overflow: hidden;
+  background: #2a2014;
+  box-shadow: 0 0 0 0.8cqw #3a2a12;
+}
+
+.flourish {
+  position: absolute;
+  width: 10cqw;
+  height: auto;
+  z-index: 3;
+}
+
+.tl {
+  left: 0.6cqw;
+  top: 0.6cqw;
+}
+
+.tr {
+  right: 0.6cqw;
+  top: 0.6cqw;
+  transform: scaleX(-1);
+}
+
+.bl {
+  left: 0.6cqw;
+  bottom: 0.6cqw;
+  transform: scaleY(-1);
+}
+
+.br {
+  right: 0.6cqw;
+  bottom: 0.6cqw;
+  transform: scale(-1, -1);
+}
+
+.plaque {
+  position: absolute;
+  left: 50%;
+  bottom: -2cqw;
+  transform: translateX(-50%);
+  padding: 0.6cqw 4cqw;
+  background: linear-gradient(#e7cd7a, #a8842a);
+  border-radius: 1cqw;
+  box-shadow: 0 0.4cqw 0.8cqw rgba(0, 0, 0, 0.35);
+  font-family: 'Cinzel', serif;
+  font-size: 3.6cqw;
+  letter-spacing: 0.2em;
+  color: #3a2614;
+  z-index: 4;
+}
+
+/* ------------------------------------------------------------------ covers */
+.leather {
+  background:
+    radial-gradient(120% 90% at 50% 40%, #6a1e1e, #3a0e0e 80%) !important;
+  box-shadow: inset 0 0 5cqw rgba(0, 0, 0, 0.5);
+}
+
+.goldBorder {
+  position: absolute;
+  inset: 4cqw;
+  border: 0.6cqw double #d9b04a;
+  border-width: 1.2cqw;
+  border-radius: 1cqw;
+  opacity: 0.85;
+}
+
+.crest {
+  position: absolute;
+  left: 30%;
+  top: 14%;
+  width: 40cqw;
+  height: auto;
+  filter: drop-shadow(0 1cqw 1.6cqw rgba(0, 0, 0, 0.45));
+}
+
+.coverTitle {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 66%;
+  margin: 0;
+  text-align: center;
+  font-family: 'Cinzel Decorative', 'Ma Shan Zheng', serif;
+  font-size: 8.4cqw;
+  letter-spacing: 0.08em;
+  color: #e7cd7a;
+  text-shadow: 0 0.3cqw 0 rgba(0, 0, 0, 0.5);
+}
+
+.coverLine {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 80%;
+  margin: 0;
+  text-align: center;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3.2cqw;
+  letter-spacing: 0.14em;
+  color: #d9c79a;
+}
+
+.table {
+  background: linear-gradient(135deg, #4a3220, #2e1f14) !important;
+}
+
+.envelope {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 26%;
+  height: 46%;
+  background: #efe0bd;
+  box-shadow: 0 1.6cqw 3cqw -1cqw rgba(0, 0, 0, 0.6);
+  transform: rotate(-3deg);
+  container-type: size;
+}
+
+.flap {
+  position: absolute;
+  inset: 0 0 45%;
+  background: #e4d2a8;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.envSeal {
+  position: absolute;
+  left: 42%;
+  top: 36%;
+  width: 16cqw;
+  height: auto;
+  z-index: 2;
+}
+
+.address {
+  position: absolute;
+  left: 30%;
+  right: 10%;
+  bottom: 10%;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 4.2cqw;
+  line-height: 1.7;
+  color: #1f5a3a;
+}
+
+.address p {
+  margin: 0;
+}
+
+.addrTitle {
+  font-family: 'Ma Shan Zheng', 'LXGW WenKai', serif;
+  font-size: 6cqw;
+}
+
+/* ------------------------------------------------------------------ pages */
+.titleInner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqh;
+  padding: 0 12cqw;
+  text-align: center;
+}
+
+.titleCrest {
+  width: 20cqw;
+  height: auto;
+  margin-bottom: 2cqh;
+}
+
+.kicker {
+  margin: 0;
+  font-family: 'Cinzel', 'LXGW WenKai', serif;
+  font-size: 3cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-soft);
+}
+
+.title {
+  margin: 0;
+  font-family: 'Ma Shan Zheng', 'Cinzel Decorative', serif;
+  font-weight: 400;
+  font-size: 10cqw;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.subtitle {
+  margin: 0;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3.4cqw;
+  color: var(--ink-soft);
+}
+
+.dateLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 9cqh;
+  margin: 0;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 2.8cqw;
+  letter-spacing: 0.4em;
+  color: var(--ink-faint);
+}
+
+.letter {
+  position: absolute;
+  inset: 0;
+  padding: 12cqh 13cqw 12cqh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'LXGW WenKai', serif;
+  color: var(--letter-ink, #1f5a3a);
+}
+
+.letterHead {
+  margin: 0 0 4cqh;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 3cqw;
+  letter-spacing: 0.4em;
+  color: var(--accent);
+}
+
+.lHi {
+  margin: 0 0 1em;
+  font-size: 4cqw;
+}
+
+.lBody {
+  margin: 0;
+  white-space: pre-line;
+  font-size: 3.8cqw;
+  line-height: 2.1;
+}
+
+.lSign {
+  margin-top: auto;
+  align-self: flex-end;
+  text-align: right;
+  font-size: 3.8cqw;
+}
+
+.lSign p {
+  margin: 0;
+}
+
+.lDate {
+  font-size: 2.8cqw;
+  opacity: 0.8;
+}
+
+.letterSeal {
+  position: absolute;
+  left: 12%;
+  bottom: 9%;
+  width: 16cqw;
+  height: auto;
+}
+
+.finis {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4cqh;
+}
+
+.finis p {
+  margin: 0;
+  font-family: 'Ma Shan Zheng', 'LXGW WenKai', serif;
+  font-size: 7cqw;
+  color: var(--accent);
+}
+
+.finisWand {
+  width: 40cqw;
+  height: auto;
+  rotate: -12deg;
+}
+
+/* ------------------------------------------------------------------ decorations */
+.candle {
+  position: absolute;
+  height: auto;
+  animation: float 5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 1cqw rgba(255, 200, 90, 0.5));
+}
+
+@keyframes float {
+  to {
+    transform: translateY(1.4cqh);
+  }
+}
+
+.steps {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.steps ellipse,
+.steps text {
+  fill: var(--ink);
+  opacity: 0.45;
+}
+
+.scarf {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 7cqw;
+  background: repeating-linear-gradient(180deg, var(--house) 0 5cqw, #d9b04a 5cqw 6.2cqw, var(--house) 6.2cqw 7.4cqw, #d9b04a 7.4cqw 8.6cqw);
+  opacity: 0.9;
+}
+
+.scarf[data-side='left'] {
+  left: 0;
+}
+
+.scarf[data-side='right'],
+.scarf[data-side='single'] {
+  right: 0;
+}
+
+.decoSeal {
+  position: absolute;
+  right: 6%;
+  top: 4%;
+  width: 14cqw;
+  height: auto;
+  rotate: -12deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .candle {
+    animation: none;
+  }
+}

@@ -1,0 +1,452 @@
+/* Theme tokens: a dark card-stock photo album with instant prints. */
+.theme {
+  --paper: #2b2622;
+  --paper-deep: #221e1b;
+  --paper-edge: #3a332d;
+  --paper-line: #4a423a;
+  --board: #26211d;
+  --ink: #efe6d4;
+  --ink-soft: #cbbfa9;
+  --ink-faint: #8f8474;
+  --print: #f6f2ea;
+  --imprint: #ff8f3f;
+  --tape: rgba(231, 219, 190, 0.62);
+}
+
+/* see storybook theme: size containers never carry padding */
+.fill,
+.board {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+.inner {
+  position: absolute;
+  inset: 0;
+}
+
+.board {
+  background-color: var(--board);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 240, 220, 0.05),
+    inset 0 0 3cqw rgba(0, 0, 0, 0.35);
+}
+
+/* ------------------------------------------------------------------ shared: prints & tape */
+.printPhoto {
+  position: relative;
+  overflow: hidden;
+  background: #d9d2c4;
+  aspect-ratio: 1;
+}
+
+.tape {
+  position: absolute;
+  top: -2.4cqw;
+  left: 50%;
+  width: 24cqw;
+  height: 5.6cqw;
+  transform: translateX(-50%) rotate(-3deg);
+  background: rgba(231, 219, 190, 0.62);
+  box-shadow: 0 0.2cqw 0.5cqw rgba(0, 0, 0, 0.18);
+  z-index: 3;
+}
+
+.imprint {
+  position: absolute;
+  right: 5%;
+  bottom: 4%;
+  z-index: 4;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 2.5cqw;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--imprint);
+  text-shadow:
+    0 0 0.4cqw rgba(255, 110, 30, 0.75),
+    0 0 1.2cqw rgba(255, 110, 30, 0.35);
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+/* film edge perforations along the top/bottom of text pages */
+.perf {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3.2cqw;
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0 2.4cqw,
+    rgba(255, 244, 225, 0.07) 2.4cqw 5cqw,
+    transparent 5cqw 6cqw
+  );
+  -webkit-mask: linear-gradient(#000, #000) center / 100% 60% no-repeat;
+  mask: linear-gradient(#000, #000) center / 100% 60% no-repeat;
+}
+
+.perfTop {
+  top: 3cqw;
+}
+
+.perfBottom {
+  bottom: 3cqw;
+}
+
+/* ------------------------------------------------------------------ covers */
+.coverPrint {
+  position: absolute;
+  left: 20%;
+  top: 14%;
+  width: 60%;
+  margin: 0;
+  padding: 3.4cqw 3.4cqw 16cqw;
+  background: var(--print);
+  transform: rotate(-2.5deg);
+  box-shadow:
+    0 0.4cqw 0.8cqw rgba(0, 0, 0, 0.35),
+    0 3cqw 6cqw -2cqw rgba(0, 0, 0, 0.5);
+}
+
+.coverTitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4.5cqw;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 5.4cqw;
+  letter-spacing: 0.18em;
+  color: #3d3630;
+}
+
+.coverLines {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 79%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6em;
+  font-family: var(--font-hand);
+  font-size: 3.1cqw;
+  letter-spacing: 0.16em;
+  color: var(--ink-soft);
+}
+
+.coverLines > span {
+  display: inline;
+}
+
+.back {
+  display: grid;
+  place-items: center;
+}
+
+.backLines {
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 4.4cqw;
+  line-height: 1.9;
+  letter-spacing: 0.16em;
+}
+
+.backLines p {
+  margin: 0;
+}
+
+.backSig {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 9%;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 2.4cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ front matter */
+.endpaper {
+  background-color: var(--paper-deep);
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 12cqw 4cqh;
+}
+
+.kicker {
+  margin: 0 0 4cqh;
+  font-family: var(--font-cn);
+  font-size: 2.8cqw;
+  letter-spacing: 0.6em;
+  text-indent: 0.6em;
+  color: var(--ink-faint);
+}
+
+.titleMain {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-weight: 400;
+  font-size: 10cqw;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+}
+
+.subtitle {
+  margin: 4cqh 0 0;
+  font-family: var(--font-hand);
+  font-size: 3.4cqw;
+  letter-spacing: 0.16em;
+  color: var(--ink-soft);
+}
+
+.dateLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12cqh;
+  margin: 0;
+  text-align: center;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 2.4cqw;
+  letter-spacing: 0.3em;
+  color: var(--imprint);
+  opacity: 0.85;
+}
+
+.dedication {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5cqh;
+  padding: 0 14cqw;
+  text-align: center;
+}
+
+.dedTo {
+  margin: 0;
+  font-family: var(--font-cn);
+  font-size: 3cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+.dedBody {
+  margin: 0;
+  white-space: pre-line;
+  font-family: var(--font-hand);
+  font-size: 4.4cqw;
+  line-height: 2;
+  letter-spacing: 0.12em;
+}
+
+/* ------------------------------------------------------------------ story */
+/* spread-wide photo mounted across the gutter with an even dark border */
+.mount {
+  position: absolute;
+  top: 8%;
+  bottom: 12%;
+  overflow: hidden;
+  box-shadow: 0 0.3cqw 1cqw rgba(0, 0, 0, 0.4);
+}
+
+.mount[data-half='left'] {
+  left: 7%;
+  right: 0;
+}
+
+.mount[data-half='right'] {
+  left: 0;
+  right: 7%;
+}
+
+.single {
+  position: absolute;
+  margin: 0;
+  left: 13%;
+  top: 11%;
+  width: 74%;
+  padding: 3cqw 3cqw 14cqw;
+  background: var(--print);
+  box-shadow:
+    0 0.4cqw 0.8cqw rgba(0, 0, 0, 0.35),
+    0 2.4cqw 5cqw -1.6cqw rgba(0, 0, 0, 0.5);
+}
+
+.single[data-side='left'] {
+  transform: rotate(-1.8deg);
+}
+
+.single[data-side='right'],
+.single[data-side='single'] {
+  transform: rotate(1.4deg);
+}
+
+.single .printPhoto {
+  aspect-ratio: 0.8;
+}
+
+.polaroidPage {
+  display: grid;
+  place-items: center;
+}
+
+.print {
+  position: absolute;
+  margin: 0;
+  width: 60cqw;
+  padding: 3cqw 3cqw 13cqw;
+  background: var(--print);
+  box-shadow:
+    0 0.4cqw 0.8cqw rgba(0, 0, 0, 0.35),
+    0 2.4cqw 5cqw -1.6cqw rgba(0, 0, 0, 0.5);
+}
+
+.print[data-i='0'] {
+  transform: rotate(-3deg);
+  top: 14%;
+  left: 20%;
+}
+
+.print[data-i='1'] {
+  transform: rotate(2.6deg);
+  top: 18%;
+  left: 20%;
+}
+
+.print[data-i='2'] {
+  transform: rotate(-1.2deg);
+  top: 50%;
+  left: 32%;
+  width: 44cqw;
+}
+
+.polaroidPage[data-count='3'] .print[data-i='0'] {
+  width: 48cqw;
+  top: 8%;
+  left: 12%;
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 16cqw;
+  gap: 3cqh;
+}
+
+.noteText {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 4.6cqw;
+  line-height: 2;
+  letter-spacing: 0.08em;
+  white-space: pre-line;
+}
+
+.notePlace {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 3cqw;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ letter: a cream card taped in */
+.letterCard {
+  position: absolute;
+  left: 11%;
+  right: 11%;
+  top: 9%;
+  bottom: 9%;
+  background: #f3ecde;
+  transform: rotate(0.8deg);
+  box-shadow:
+    0 0.4cqw 0.8cqw rgba(0, 0, 0, 0.3),
+    0 2.4cqw 5cqw -1.6cqw rgba(0, 0, 0, 0.45);
+  container-type: size;
+}
+
+.letterInner {
+  position: absolute;
+  inset: 0;
+  padding: 11cqh 10cqw 9cqh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-hand);
+  color: #3b342d;
+}
+
+.letterHi {
+  margin: 0 0 1em;
+  font-size: 4.6cqw;
+}
+
+.letterBody {
+  margin: 0;
+  font-size: 4.2cqw;
+  line-height: 2.1;
+  letter-spacing: 0.05em;
+  white-space: pre-wrap;
+}
+
+.letterBody p {
+  margin: 0 0 0.8em;
+  text-indent: 2em;
+  white-space: normal;
+}
+
+.letterSign {
+  margin-top: auto;
+  align-self: flex-end;
+  text-align: right;
+  font-size: 4.2cqw;
+  line-height: 1.9;
+}
+
+.letterSign p {
+  margin: 0;
+}
+
+.letterDate {
+  font-size: 3.2cqw;
+  color: #8a7f70;
+}
+
+/* ------------------------------------------------------------------ finis */
+.finis {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 5cqw;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ decorations */
+.leak {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+}
+
+.dust {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}

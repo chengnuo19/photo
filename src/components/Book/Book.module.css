@@ -1,0 +1,190 @@
+.stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* leave room for masthead above and caption below */
+  padding: max(56px, 7.5vh) 0 calc(max(84px, 10vh) + var(--reserve, 0px));
+  transition: opacity 420ms var(--ease-out);
+  /* the scene behind (easter eggs) stays clickable around the book */
+  pointer-events: none;
+}
+
+.bookArea {
+  pointer-events: auto;
+}
+
+.stage[data-editing] .hint,
+.stage[data-editing] .again {
+  display: none;
+}
+
+.stage[data-layout='portrait'] {
+  padding: max(48px, 8vh) 0 calc(max(72px, 12vh) + var(--reserve, 0px));
+}
+
+.stage[data-turning] .bookArea {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.bookArea {
+  position: relative;
+  flex: none;
+  transition:
+    opacity 400ms var(--ease-out),
+    transform 400ms var(--ease-out);
+}
+
+/* Everything that moves together when the book opens/closes. */
+.mover {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* ------------------------------------------------------------------ table shadows
+ * Three layers, from far to near:
+ *   ambient  – soft, wide contact shadow on the table (one per half)
+ *   block    – the page block; its box-shadow draws the stacked page edges
+ *   gutter   – spine shading drawn inside each page (see .gutter)
+ * plus the engine's dynamic fold shadows while flipping.
+ */
+.ambient,
+.block {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  pointer-events: none;
+}
+
+.left {
+  transform-origin: 100% 50%;
+}
+
+.right {
+  transform-origin: 0% 50%;
+}
+
+.ambient {
+  border-radius: 2px;
+  box-shadow:
+    0 1px 1px rgba(70, 52, 30, 0.1),
+    0 3px 6px -1px rgba(70, 52, 30, 0.1),
+    0 14px 24px -8px rgba(70, 52, 30, 0.16),
+    0 34px 60px -20px rgba(70, 52, 30, 0.2);
+}
+
+.ambient::after {
+  /* the book pressing into the table: a flat, very soft pool under the lower edge */
+  content: '';
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: -18px;
+  height: 36px;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(70, 52, 30, 0.16), transparent 70%);
+  filter: blur(6px);
+}
+
+.block {
+  background: var(--paper-deep);
+}
+
+/* ------------------------------------------------------------------ page shell */
+.page {
+  position: absolute;
+  inset: 0;
+}
+
+/* Spine shading: dark crease at the binding, then a lift of light, fading into the page. */
+.gutter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 13%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.page[data-side='left'] .gutter {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    rgba(58, 40, 22, 0.3) 0%,
+    rgba(58, 40, 22, 0.14) 7%,
+    rgba(255, 250, 240, 0.08) 22%,
+    rgba(58, 40, 22, 0.035) 45%,
+    transparent 100%
+  );
+}
+
+.page[data-side='right'] .gutter,
+.page[data-side='single'] .gutter {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    rgba(58, 40, 22, 0.26) 0%,
+    rgba(58, 40, 22, 0.12) 6%,
+    rgba(255, 250, 240, 0.08) 20%,
+    rgba(58, 40, 22, 0.03) 45%,
+    transparent 100%
+  );
+}
+
+.page[data-side='single'] .gutter {
+  width: 7%;
+}
+
+/* ------------------------------------------------------------------ quiet text below the book */
+.hint,
+.again {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + max(22px, 3.2vh));
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 10px;
+  border: 0;
+  background: none;
+  font-family: var(--font-hand);
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  color: var(--room-ink);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms var(--ease-out);
+}
+
+.hint[data-show] {
+  opacity: 0.8;
+  transition-delay: 1400ms;
+}
+
+.again {
+  cursor: pointer;
+}
+
+.again[data-show] {
+  opacity: 0.85;
+  pointer-events: auto;
+  transition-delay: 600ms;
+}
+
+.again:hover {
+  color: var(--room-strong);
+}
+
+.stage[data-layout='landscape'][data-phase='closed'] .hint {
+  /* closed cover sits over the right half; the mover is shifted, the text follows the cover */
+  left: 50%;
+}
+
+/* Decorative animations (twinkling lights, spores…) hold still while a page turns,
+   so the flip keeps its full frame budget. */
+.stage:is([data-phase='flipping'], [data-phase='opening'], [data-phase='closing']) :global(.mb-anim) {
+  animation-play-state: paused !important;
+}

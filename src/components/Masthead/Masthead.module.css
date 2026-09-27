@@ -1,0 +1,99 @@
+.top,
+.bottom,
+.right {
+  position: fixed;
+  z-index: 30;
+  color: var(--room-ink);
+  font-family: var(--font-cn);
+}
+
+.top,
+.bottom {
+  pointer-events: none;
+}
+
+.top {
+  top: max(20px, 2.6vh);
+  left: max(24px, 2.2vw);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--room-soft);
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+a.brand:hover .name {
+  color: var(--room-strong);
+}
+
+.mark {
+  display: inline-flex;
+}
+
+.sep {
+  opacity: 0.5;
+}
+
+.right {
+  top: max(16px, 2.2vh);
+  right: max(24px, 2.2vw);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.bottom {
+  left: max(24px, 2.2vw);
+  bottom: max(18px, 2.4vh);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  opacity: 0.75;
+}
+
+@media (max-width: 719px) {
+  .top {
+    top: 16px;
+    left: 16px;
+    font-size: 11px;
+  }
+
+  .book,
+  .sep {
+    display: none;
+  }
+
+  .right {
+    top: 38px;
+    left: 8px;
+    right: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .right > * {
+    font-size: 11px;
+  }
+
+  /* a single link (reader) stays in the corner */
+  .right:has(> :only-child) {
+    top: 10px;
+    left: auto;
+    right: 10px;
+  }
+
+  .bottom {
+    display: none;
+  }
+}

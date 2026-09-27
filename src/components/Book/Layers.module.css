@@ -1,0 +1,78 @@
+.decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  container-type: size;
+  z-index: 3;
+}
+
+.stickers {
+  z-index: 4;
+}
+
+.sticker {
+  position: absolute;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 1.5px rgba(40, 28, 16, 0.22));
+}
+
+.sticker[data-editing] {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+.sticker[data-editing][data-active] {
+  cursor: grabbing;
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.remove,
+.handle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.sticker[data-editing]:hover .remove,
+.sticker[data-editing]:hover .handle,
+.sticker[data-active] .handle {
+  opacity: 1;
+}
+
+.remove {
+  top: -9px;
+  right: -9px;
+  padding: 0;
+  border: 0;
+  background: rgba(40, 32, 24, 0.78);
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.handle {
+  right: -9px;
+  bottom: -9px;
+  background: #fff;
+  box-shadow: 0 0 0 1.5px rgba(40, 32, 24, 0.7);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.sticker[data-editing]:hover {
+  outline: 1px dashed rgba(90, 70, 45, 0.55);
+  outline-offset: 3px;
+}

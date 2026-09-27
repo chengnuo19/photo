@@ -1,0 +1,109 @@
+/* a faint star chart printed across the table */
+.chart {
+  color: color-mix(in srgb, var(--room) 70%, #3b4a72);
+  background:
+    var(--grain),
+    radial-gradient(120% 100% at 50% 45%, var(--room) 45%, color-mix(in srgb, var(--room) 84%, #2a3a64) 100%);
+  background-size: 220px, 100% 100%;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.35;
+}
+
+/* twinkling points printed in gold */
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #c6a14e;
+  box-shadow: 0 0 6px rgba(214, 170, 70, 0.8);
+  animation: twinkle 5s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    scale: 0.8;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.2;
+  }
+}
+
+/* a shooting star every ~14 s */
+.shooting {
+  position: absolute;
+  top: 12%;
+  left: 70%;
+  width: 180px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(198, 161, 78, 0), #c6a14e);
+  rotate: 160deg;
+  opacity: 0;
+  animation: shoot 14s ease-in infinite 3s;
+}
+
+@keyframes shoot {
+  0%,
+  88% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  90% {
+    opacity: 1;
+  }
+  96%,
+  100% {
+    opacity: 0;
+    transform: translateX(520px);
+  }
+}
+
+.conLine {
+  stroke-dashoffset: 300;
+}
+
+.conGlow {
+  opacity: 0;
+}
+
+.conEgg[data-play] .conLine {
+  animation: draw 1.6s ease-out forwards;
+}
+
+.conEgg[data-play] .conGlow {
+  animation: glow 1.4s ease-out;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes glow {
+  30% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.sand {
+  stroke-dasharray: 3 3;
+  animation: fall 1s linear infinite;
+}
+
+@keyframes fall {
+  to {
+    stroke-dashoffset: -6;
+  }
+}

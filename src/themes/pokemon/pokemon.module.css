@@ -1,0 +1,446 @@
+/* Pokémon — capture balls, tall grass, dex cards, pixel dialogs */
+.theme {
+  --paper: #fbf8f2;
+  --paper-deep: #f1ece2;
+  --paper-edge: #ddd5c6;
+  --board: #e3350d;
+  --ink: #2b2b2b;
+  --ink-soft: #555;
+  --ink-faint: #999;
+  --accent: #e3350d;
+  --dot: rgba(227, 53, 13, 0.08);
+  --card: #fdfaf2;
+  --card-border: #f2c94c;
+  --print: #fdfaf2;
+  --room: #f6f4ef;
+  --font-display: 'Fredoka', 'ZCOOL KuaiLe', sans-serif;
+  --font-hand: 'ZCOOL KuaiLe', 'Fredoka', sans-serif;
+  --font-body: 'ZCOOL KuaiLe', sans-serif;
+  --font-cn: 'ZCOOL KuaiLe', 'Noto Serif SC', sans-serif;
+  --title-weight: 500;
+  --title-color: var(--accent);
+}
+
+.theme img {
+  filter: var(--photo-filter, none);
+}
+
+.theme :global(.paper) {
+  background-image:
+    radial-gradient(circle, var(--dot) 1.2px, transparent 1.6px),
+    var(--grain);
+  background-size: 18px 18px, 220px 220px;
+}
+
+.fill,
+.board {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+.board {
+  background-color: var(--paper);
+  box-shadow: inset 0 0 0 1.4cqw var(--board), inset 0 0 0 1.8cqw #2b2b2b;
+}
+
+/* ------------------------------------------------------------------ dex card frame */
+.card {
+  background: var(--card);
+  border: 1.6cqw solid var(--card-border);
+  border-radius: 4cqw;
+  box-shadow: 0 0.6cqh 1.6cqh rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.cardHead {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 13cqw;
+  padding: 0 4cqw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--accent);
+  color: #fff;
+}
+
+.cardNo {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 3.6cqw;
+}
+
+.cardName {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 5cqw;
+  letter-spacing: 0.1em;
+}
+
+.cardWindow {
+  position: absolute;
+  left: 4cqw;
+  right: 4cqw;
+  top: 16cqw;
+  bottom: 14cqw;
+  overflow: hidden;
+  border-radius: 2cqw;
+  box-shadow: inset 0 0 0 0.6cqw rgba(0, 0, 0, 0.15);
+  background: #ddd;
+}
+
+.cardFoot {
+  position: absolute;
+  left: 4cqw;
+  right: 4cqw;
+  bottom: 3cqw;
+  height: 8cqw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.type {
+  padding: 0.6cqw 4cqw;
+  border-radius: 99px;
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 4.4cqw;
+  color: #fff;
+  background: #5fbf5a;
+}
+
+.type[data-t='1'] {
+  background: #2f7fc0;
+}
+
+.type[data-t='2'] {
+  background: #f08030;
+}
+
+.type[data-t='3'] {
+  background: #e6b800;
+}
+
+.cardDate {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 3.2cqw;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ covers */
+.dots {
+  background-color: var(--paper) !important;
+}
+
+.coverBall {
+  position: absolute;
+  left: 24%;
+  top: 14%;
+  width: 52cqw;
+  height: auto;
+  filter: drop-shadow(0 1.4cqw 1.4cqw rgba(0, 0, 0, 0.18));
+}
+
+.coverTitle {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 66%;
+  margin: 0;
+  text-align: center;
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 8cqw;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  -webkit-text-stroke: 0.4cqw #fff;
+  paint-order: stroke fill;
+  text-shadow: 0 0.6cqw 0 #2b2b2b33;
+}
+
+.coverLine {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 80%;
+  margin: 0;
+  text-align: center;
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 3.6cqw;
+  color: var(--ink-soft);
+}
+
+.dexBody {
+  background: linear-gradient(160deg, #e0262e, #b3151c) !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2), inset -1.4cqw 0 0 rgba(0, 0, 0, 0.15);
+}
+
+.lens {
+  position: absolute;
+  left: 8%;
+  top: 5%;
+  width: 16cqw;
+  height: 16cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #bdf0ff, #2aa6e8 60%, #1b6fa8);
+  box-shadow: 0 0 0 1.6cqw #f4f4f4, 0 0 0 2.2cqw #2b2b2b;
+}
+
+.led {
+  position: absolute;
+  top: 6%;
+  width: 5cqw;
+  height: 5cqw;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.6cqw #2b2b2b;
+}
+
+.l1 {
+  left: 34%;
+  background: #f25a5a;
+}
+
+.l2 {
+  left: 44%;
+  background: #f2c230;
+}
+
+.l3 {
+  left: 54%;
+  background: #5fbf5a;
+}
+
+.screen {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 25%;
+  height: 40%;
+  padding: 4cqw;
+  border-radius: 2cqw 2cqw 2cqw 8cqw;
+  background: #dfe3e6;
+  box-shadow: inset 0 0 0 0.8cqw #2b2b2b;
+}
+
+.screenPhoto {
+  inset: 4cqw;
+  border: 0.8cqw solid #2b2b2b;
+}
+
+.dexTitle {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 70%;
+  margin: 0;
+  text-align: center;
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 6.6cqw;
+  color: #fff;
+  text-shadow: 0 0.5cqw 0 rgba(0, 0, 0, 0.25);
+}
+
+.dpad {
+  position: absolute;
+  left: 14%;
+  bottom: 7%;
+  width: 16cqw;
+  height: 16cqw;
+  background:
+    linear-gradient(#2b2b2b, #2b2b2b) center / 34% 100% no-repeat,
+    linear-gradient(#2b2b2b, #2b2b2b) center / 100% 34% no-repeat;
+}
+
+.dexBtn {
+  position: absolute;
+  right: 16%;
+  bottom: 10%;
+  width: 10cqw;
+  height: 10cqw;
+  border-radius: 50%;
+  background: #2b2b2b;
+}
+
+/* ------------------------------------------------------------------ pages */
+.titleInner {
+  position: absolute;
+  inset: 0 0 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqh;
+  padding: 0 10cqw;
+  text-align: center;
+}
+
+.kicker {
+  margin: 0;
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 3.6cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-soft);
+}
+
+.title {
+  margin: 0;
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-weight: 400;
+  font-size: 9cqw;
+  color: var(--accent);
+}
+
+.titleBall {
+  width: 14cqw;
+  height: auto;
+}
+
+.dialog {
+  position: absolute;
+  padding: 4cqw 6cqw;
+  background: #fbfbfb;
+  border: 1.2cqw solid #2b2b2b;
+  border-radius: 2cqw;
+  box-shadow: inset 0 0 0 0.8cqw #fbfbfb, inset 0 0 0 1.6cqw #5a8ee0;
+  font-family: 'ZCOOL KuaiLe', 'Press Start 2P', sans-serif;
+  color: #2b2b2b;
+  image-rendering: pixelated;
+}
+
+.dialogText {
+  font-size: 4.2cqw;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.dialogArrow {
+  position: absolute;
+  right: 4cqw;
+  bottom: 1.6cqw;
+  font-size: 3cqw;
+  animation: blink 1s steps(2) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.titleDialog {
+  left: 7%;
+  right: 7%;
+  bottom: 9%;
+}
+
+.pageDialog {
+  right: 4%;
+  bottom: 3%;
+  max-width: 64%;
+  padding: 2.6cqw 4.4cqw 3cqw;
+}
+
+.pageDialog .dialogText {
+  font-size: 3cqw;
+}
+
+.theEnd {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 36%;
+  margin: 0;
+  text-align: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7cqw;
+  color: var(--accent);
+}
+
+.badgeCase {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 22%;
+  padding: 4cqw;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3cqw;
+  background: #3a2e5e;
+  border-radius: 3cqw;
+  box-shadow: inset 0 0 0 1cqw #cfae5a;
+}
+
+.caseBadge {
+  width: 100%;
+  height: auto;
+}
+
+.backLines {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 64%;
+  text-align: center;
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  font-size: 4.6cqw;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.backLines p {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ decorations */
+.grassRow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1%;
+  height: 12%;
+}
+
+.tuft {
+  position: absolute;
+  bottom: 0;
+  height: auto;
+  transform-origin: bottom center;
+  animation: sway 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes sway {
+  from {
+    transform: skewX(-4deg);
+  }
+  to {
+    transform: skewX(4deg);
+  }
+}
+
+.decoBall {
+  position: absolute;
+  width: 9cqw;
+  height: auto;
+}
+
+.badgeRow {
+  position: absolute;
+  left: 8%;
+  top: 3.5%;
+  display: flex;
+  gap: 2cqw;
+}
+
+.rowBadge {
+  width: 6cqw;
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tuft,
+  .dialogArrow {
+    animation: none;
+  }
+}

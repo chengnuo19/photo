@@ -1,0 +1,37 @@
+.room {
+  position: fixed;
+  inset: 0;
+  background: var(--room);
+  opacity: 0;
+  transition: opacity 900ms var(--ease-out);
+}
+
+.room[data-ready] {
+  opacity: 1;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.note {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+
+/* the book waits under the gift wrapping, then fades onto the table */
+.table {
+  transition: opacity 700ms var(--ease-out);
+}
+
+.table[data-sealed] {
+  opacity: 0;
+  pointer-events: none;
+}

@@ -1,0 +1,352 @@
+/* Watercolour diary */
+.theme {
+  --paper: #f8f5ef;
+  --paper-deep: #efeae1;
+  --paper-edge: #ded7ca;
+  --board: #f5f1ea;
+  --ink: #4a4541;
+  --ink-soft: #7a7068;
+  --ink-faint: #aaa196;
+  --accent: #e98aa0;
+  --wash-1: #a9c7de;
+  --wash-2: #e98aa0;
+  --wash-3: #b8d39a;
+  --print: #fbf9f4;
+  --tape: rgba(233, 138, 160, 0.4);
+  --room: #faf8f4;
+  --font-display: 'LXGW WenKai', serif;
+  --font-hand: 'Caveat', 'LXGW WenKai', serif;
+  --font-body: 'LXGW WenKai', serif;
+  --title-weight: 400;
+  --wash-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.07' numOctaves='3' seed='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='6'/%3E%3C/filter%3E%3Crect x='4' y='4' width='92' height='92' fill='black' filter='url(%23f)'/%3E%3C/svg%3E");
+}
+
+/* cold-press paper: a little more tooth */
+.theme :global(.paper) {
+  background-image:
+    radial-gradient(130% 100% at 50% 45%, transparent 60%, rgba(150, 130, 100, 0.08) 100%),
+    var(--grain),
+    var(--grain);
+  background-size: 100% 100%, 220px 220px, 90px 90px;
+}
+
+.fill,
+.board {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+.board {
+  background-color: var(--board);
+  box-shadow: inset 0 0 3cqw rgba(150, 130, 100, 0.12);
+}
+
+/* ------------------------------------------------------------------ wash frame */
+.washFrame {
+  overflow: visible;
+}
+
+.washBehind {
+  position: absolute;
+  inset: -6% -5% -8% -6%;
+  border-radius: 46% 54% 42% 58% / 52% 44% 56% 48%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--wash-1) 70%, transparent), color-mix(in srgb, var(--wash-1) 25%, transparent) 70%, transparent);
+  filter: blur(1.4cqw);
+}
+
+.washWindow {
+  position: absolute;
+  inset: 0;
+  -webkit-mask: var(--wash-mask) center / 100% 100% no-repeat;
+  mask: var(--wash-mask) center / 100% 100% no-repeat;
+}
+
+.handDate {
+  position: absolute;
+  right: 4%;
+  bottom: -9cqw;
+  font-family: 'Caveat', cursive;
+  font-size: 9cqw;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------ covers */
+.bigWash1,
+.bigWash2,
+.bigWash3 {
+  position: absolute;
+  border-radius: 48% 52% 44% 56% / 55% 45% 55% 45%;
+  filter: blur(2cqw);
+  opacity: 0.6;
+}
+
+.bigWash1 {
+  left: 8%;
+  top: 10%;
+  width: 70%;
+  height: 40%;
+  background: var(--wash-1);
+}
+
+.bigWash2 {
+  right: 6%;
+  top: 30%;
+  width: 50%;
+  height: 34%;
+  background: var(--wash-2);
+  opacity: 0.45;
+}
+
+.bigWash3 {
+  left: 20%;
+  bottom: 12%;
+  width: 60%;
+  height: 22%;
+  background: var(--wash-3);
+  opacity: 0.45;
+}
+
+.coverTitle {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 34%;
+  margin: 0;
+  text-align: center;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 10cqw;
+  letter-spacing: 0.16em;
+  color: var(--ink);
+}
+
+.coverLine {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 56%;
+  margin: 0;
+  text-align: center;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3.2cqw;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+
+.coverDate {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8%;
+  margin: 0;
+  text-align: center;
+  font-family: 'Caveat', 'LXGW WenKai', cursive;
+  font-size: 4.4cqw;
+  color: var(--ink-faint);
+}
+
+.wreath {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 0;
+  height: 0;
+}
+
+.wreathItem {
+  position: absolute;
+  left: -6cqw;
+  top: -8cqw;
+  width: 12cqw;
+  height: auto;
+  transform-origin: 6cqw 8cqw;
+}
+
+.wreathTitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 40%;
+  margin: 0;
+  text-align: center;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 7.4cqw;
+  letter-spacing: 0.14em;
+}
+
+.wreathKicker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 84%;
+  margin: 0;
+  text-align: center;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3.2cqw;
+  letter-spacing: 0.3em;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------ title */
+.titleWash {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 30%;
+  height: 26%;
+  border-radius: 50% 44% 56% 46% / 48% 56% 44% 52%;
+  background: var(--wash-1);
+  opacity: 0.35;
+  filter: blur(2.4cqw);
+}
+
+.titleInner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqh;
+  padding: 0 12cqw;
+  text-align: center;
+}
+
+.kicker {
+  margin: 0;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3cqw;
+  letter-spacing: 0.4em;
+  color: var(--ink-soft);
+}
+
+.title {
+  margin: 0;
+  font-family: 'LXGW WenKai', serif;
+  font-weight: 400;
+  font-size: 9cqw;
+  letter-spacing: 0.16em;
+}
+
+.subtitle {
+  margin: 0;
+  font-family: 'LXGW WenKai', serif;
+  font-size: 3.4cqw;
+  color: var(--ink-soft);
+}
+
+.titleDaisy {
+  position: absolute;
+  right: 12%;
+  bottom: 12%;
+  width: 12cqw;
+  height: auto;
+  rotate: 18deg;
+}
+
+.dateLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8cqh;
+  margin: 0;
+  text-align: center;
+  font-family: 'Caveat', 'LXGW WenKai', cursive;
+  font-size: 4.4cqw;
+  color: var(--ink-faint);
+}
+
+.finis {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqh;
+}
+
+.finis p {
+  margin: 0;
+  font-family: 'Caveat', cursive;
+  font-size: 10cqw;
+  color: var(--ink-soft);
+}
+
+.finisFern {
+  width: 12cqw;
+  height: auto;
+}
+
+/* ------------------------------------------------------------------ decorations */
+.splash {
+  position: absolute;
+  width: 28cqw;
+  height: 22cqw;
+  transform: translate(-50%, -50%);
+  border-radius: 45% 55% 40% 60% / 55% 40% 60% 45%;
+  background: var(--wash-2);
+  opacity: 0.28;
+  filter: blur(1.6cqw);
+}
+
+.splash[data-i='1'] {
+  background: var(--wash-3);
+}
+
+.pressed {
+  position: absolute;
+  width: 14cqw;
+  height: auto;
+  opacity: 0.85;
+}
+
+.pressedLeaf {
+  position: absolute;
+  width: 8cqw;
+  height: auto;
+  opacity: 0.75;
+}
+
+.swatches {
+  position: absolute;
+  left: 8%;
+  top: 4.5%;
+  display: flex;
+  gap: 2cqw;
+}
+
+.swatches span {
+  display: block;
+  width: 8cqw;
+  height: 5cqw;
+  border-radius: 40% 60% 50% 50% / 50% 45% 55% 50%;
+  opacity: 0.7;
+  filter: blur(0.2cqw);
+}
+
+.pencilSun,
+.pencilArrow {
+  position: absolute;
+  height: auto;
+  overflow: visible;
+}
+
+.pencilSun {
+  top: 2%;
+  width: 13cqw;
+}
+
+.pencilArrow {
+  bottom: 2.5%;
+  width: 24cqw;
+}
+
+.pencilSun path,
+.pencilArrow path {
+  fill: none;
+  stroke: #8a8378;
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
