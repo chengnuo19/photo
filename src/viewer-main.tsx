@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client';
 import './styles/global.css';
 import { ReadingRoom } from './app/ReadingRoom';
 import type { BookDoc } from './data/schema';
-import { loadTheme } from './themes';
+import { loadBookThemes } from './themes';
 
 const raw = document.getElementById('book-data')?.textContent ?? 'null';
 const book = JSON.parse(raw) as BookDoc | null;
@@ -15,8 +15,8 @@ const root = createRoot(document.getElementById('root')!);
 
 if (book) {
   document.title = book.meta.title || document.title;
-  // (in the single-file reader every theme is inlined; this just resolves the module)
-  void loadTheme(book.themeId).catch(() => undefined).then(() => root.render(
+  // every theme is inlined in the single-file reader; this registers the ones the book uses
+  void loadBookThemes(book).catch(() => undefined).then(() => root.render(
     <StrictMode>
       <ReadingRoom book={book} unwrap={book.gift?.unwrap !== false} />
     </StrictMode>,

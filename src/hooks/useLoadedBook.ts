@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { sampleBook } from '../data/sampleBook';
-import { listThemes, loadTheme, sampleThemeId } from '../themes';
+import { listThemes, loadBookThemes, loadTheme, sampleThemeId } from '../themes';
 import type { BookDoc } from '../data/schema';
 import { loadAssets, resolveBook } from '../storage/assets';
 import { getBook } from '../storage/db';
@@ -48,7 +48,7 @@ export function useLoadedBook(id: string) {
         setStatus('missing');
         return;
       }
-      await Promise.all([loadAssets(stored.doc), loadTheme(stored.doc.themeId).catch(() => undefined)]);
+      await Promise.all([loadAssets(stored.doc), loadBookThemes(stored.doc).catch(() => undefined)]);
       if (!alive) return;
       setDoc(stored.doc);
       setAssetsVersion((v) => v + 1);

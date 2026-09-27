@@ -91,6 +91,13 @@ export function listThemes(): Theme[] {
   return ORDER.filter((id) => THEMES.has(id)).map((id) => THEMES.get(id)!);
 }
 
+/** Load what a book needs to render: its theme, plus every theme if it carries another theme's stickers. */
+export async function loadBookThemes(book: BookDoc) {
+  const own = await loadTheme(book.themeId);
+  const foreign = book.spreads.some((s) => s.stickers?.some((st) => st.src.startsWith('theme:') && !own.stickers[st.src.slice(6)]));
+  if (foreign) await loadAllThemes();
+}
+
 /** The theme a book id / sample id needs, without loading anything. */
 export function sampleThemeId(sampleId: string): ThemeId {
   const t = sampleId.replace(/^sample-/, '') as ThemeId;
@@ -116,8 +123,15 @@ function subscribe(cb: () => void) {
   return () => listeners.delete(cb);
 }
 
-/** Warm the rest of the catalogue once the page is idle (stickers from other themes, the style menu). */
+/**
+ * Warm the rest of the catalogue once the page is idle, so the gallery and style menu open
+ * instantly. Skipped for readers (they need one theme) and on slow / data-saver connections,
+ * where it would compete with the book actually being opened.
+ */
 export function preloadThemesWhenIdle() {
+  const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  if (conn?.saveData || /(^|-)2g|3g/.test(conn?.effectiveType ?? '')) return;
+  if (/^#\/?book\/[^/]+\/?$/.test(location.hash)) return;
   const go = () => void loadAllThemes().catch(() => undefined);
   if ('requestIdleCallback' in window) window.requestIdleCallback(go, { timeout: 6000 });
   else setTimeout(go, 3000);
