@@ -18,10 +18,13 @@ function woff2Only(): { postcssPlugin: string; Declaration: (d: { prop: string; 
   };
 }
 
+// (read without @types/node: the app itself has no Node typings)
+const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
+
 export default defineConfig({
   plugins: [react() as Plugin[]],
   // GitHub Pages serves the site under /photo/ (set in .github/workflows/deploy.yml); local dev stays at /
-  base: process.env.BASE_PATH ?? '/',
+  base: env.BASE_PATH ?? '/',
   server: { port: 5173 },
   css: { postcss: { plugins: [woff2Only()] } },
   build: {
