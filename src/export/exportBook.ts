@@ -6,6 +6,7 @@ import { srcToBlob } from '../storage/assets';
 import { forEachSrc, mapSrcs } from '../storage/db';
 import { fontsOf, getTheme } from '../themes';
 import { ensureFonts } from '../themes/fonts';
+import { makeShareImages } from './shareCard';
 
 /**
  * Export a book as something that can be shared without this app:
@@ -19,6 +20,17 @@ import { ensureFonts } from '../themes/fonts';
  */
 export type ExportKind = 'zip' | 'html';
 
+/**
+ * - `high`:    photos as stored (long edge up to 2560) — best on big screens;
+ * - `compact`: long edge 1400, a little more compression — about half the size, loads fast
+ *              on phones and fits chat apps' file limits.
+ */
+export type ExportQuality = 'high' | 'compact';
+
+export interface ExportOptions {
+  quality?: ExportQuality;
+}
+
 export interface ExportResult {
   blob: Blob;
   filename: string;
@@ -30,7 +42,7 @@ type Progress = (msg: string) => void;
 const UI_TEXT = '回忆绘本轻点封面，打开这本书再读一遍— 完 —音乐静音暂停播放书已合上。按右方向键或点击封面打开这张图片没能加载出来©·/ ';
 const ASCII = Array.from({ length: 95 }, (_, i) => String.fromCharCode(32 + i)).join('');
 
-export async function exportBook(doc: BookDoc, kind: ExportKind, progress: Progress = () => {}): Promise<ExportResult> {
+export async function exportBook(doc: BookDoc, kind: ExportKind, progress: Progress = () => {}, opts: ExportOptions = {}): Promise<ExportResult> {
   progress('准备阅读器…');
   const template = await loadTemplate();
 
@@ -44,7 +56,8 @@ export async function exportBook(doc: BookDoc, kind: ExportKind, progress: Progr
   for (const src of srcs) {
     n++;
     progress(`整理图片和音乐 ${n}/${srcs.length}…`);
-    const blob = await srcToBlob(src);
+    let blob = await srcToBlob(src);
+    if (opts.quality === 'compact') blob = await shrink(blob);
     assetOut.set(src, { path: `assets/${String(n).padStart(3, '0')}.${extOf(blob.type, src)}`, blob });
   }
 
@@ -64,13 +77,20 @@ export async function exportBook(doc: BookDoc, kind: ExportKind, progress: Progr
     fontOut.push({ face, path: `fonts/${String(k).padStart(3, '0')}.woff2`, blob: await res.blob() });
   }
 
+  progress('制作分享封面…');
+  const share = await makeShareImages(doc);
+
   progress('写入文件…');
   if (kind === 'zip') {
     const { default: JSZip } = await import('jszip');
     const zip = new JSZip();
     const mapped = mapSrcs(doc, (s) => assetOut.get(s)?.path ?? s);
     const css = fontOut.map((f) => fontFaceCss(f.face, f.path)).join('\n');
-    zip.file('index.html', inject(template, mapped, css));
+    zip.file('index.html', inject(template, mapped, css, share ? { card: 'cover.jpg', icon: 'icon.jpg' } : undefined));
+    if (share) {
+      zip.file('cover.jpg', share.card);
+      zip.file('icon.jpg', share.icon);
+    }
     for (const a of assetOut.values()) zip.file(a.path, a.blob);
     for (const f of fontOut) zip.file(f.path, f.blob);
     zip.file('README.txt', readme(doc));
@@ -83,7 +103,8 @@ export async function exportBook(doc: BookDoc, kind: ExportKind, progress: Progr
   const mapped = mapSrcs(doc, (s) => dataUris.get(s) ?? s);
   const fontCss: string[] = [];
   for (const f of fontOut) fontCss.push(fontFaceCss(f.face, await toDataUri(f.blob)));
-  const html = inject(template, mapped, fontCss.join('\n'));
+  // a single file has no address of its own, so only the icon (data URI) makes sense here
+  const html = inject(template, mapped, fontCss.join('\n'), share ? { icon: await toDataUri(share.icon) } : undefined);
   return { blob: new Blob([html], { type: 'text/html' }), filename: `${safeName(doc.meta.title)}-回忆绘本.html` };
 }
 
@@ -111,7 +132,13 @@ const BS = String.fromCharCode(92); // backslash
 const LS = String.fromCharCode(0x2028);
 const LINE_SEPARATORS = new RegExp('[' + LS + String.fromCharCode(0x2029) + ']', 'g');
 
-function inject(template: string, book: BookDoc, fontCss: string) {
+interface ShareRefs {
+  /** Relative path of the 1200×630 card (zip only). */
+  card?: string;
+  icon?: string;
+}
+
+function inject(template: string, book: BookDoc, fontCss: string, share?: ShareRefs) {
   // Escape '<' (no '</script>' can end the block early) and U+2028/2029 (invalid in older JS).
   const json = JSON.stringify(book).replace(/</g, BS + 'u003c').replace(LINE_SEPARATORS, (c) => BS + (c === LS ? 'u2028' : 'u2029'));
   const title = esc(book.meta.title || '回忆绘本');
@@ -121,11 +148,26 @@ function inject(template: string, book: BookDoc, fontCss: string) {
     `<meta property="og:title" content="${title}" />`,
     `<meta property="og:description" content="${desc}" />`,
     `<meta property="og:type" content="book" />`,
+    ...(share?.card
+      ? [
+          // Relative: resolved against the page by most link previews once the folder is hosted.
+          `<meta property="og:image" content="${share.card}" />`,
+          `<meta property="og:image:width" content="1200" />`,
+          `<meta property="og:image:height" content="630" />`,
+          `<meta name="twitter:card" content="summary_large_image" />`,
+          `<meta name="twitter:image" content="${share.card}" />`,
+          `<link rel="image_src" href="${share.card}" />`,
+        ]
+      : []),
+    ...(share?.icon ? [`<link rel="icon" href="${share.icon}" />`, `<link rel="apple-touch-icon" href="${share.icon}" />`] : []),
   ].join('\n    ');
+  // WeChat's in-app browser uses the first large image in the page as the share thumbnail.
+  const wechat = share?.card ? `<div style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><img src="${share.card}" alt="" /></div>` : '';
   return template
     .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
     .replace('<!--BOOK_META-->', meta)
     .replace('<!--BOOK_FONTS-->', fontCss ? `<style>\n${fontCss}\n</style>` : '')
+    .replace(/<body>(?=\s*<div id="root">)/, () => `<body>\n    ${wechat}`)
     .replace(/<script id="book-data" type="application\/json">[\s\S]*?<\/script>/, () => `<script id="book-data" type="application/json">${json}</script>`);
 }
 
@@ -220,6 +262,27 @@ function extOf(type: string, src: string) {
   return byType[type] ?? src.split(/[?#]/)[0].split('.').pop()?.slice(0, 5) ?? 'bin';
 }
 
+/** Re-encode a photo for the compact export (long edge 1400); keeps the original if that is not smaller. */
+const COMPACT_EDGE = 1400;
+async function shrink(blob: Blob): Promise<Blob> {
+  if (!/^image\/(webp|jpeg|png)$/.test(blob.type) || blob.size < 160 * 1024) return blob;
+  try {
+    const bm = await createImageBitmap(blob);
+    const scale = Math.min(1, COMPACT_EDGE / Math.max(bm.width, bm.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bm.width * scale);
+    c.height = Math.round(bm.height * scale);
+    const ctx = c.getContext('2d')!;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bm, 0, 0, c.width, c.height);
+    bm.close();
+    const out = await new Promise<Blob | null>((r) => c.toBlob(r, 'image/webp', 0.78));
+    return out && out.type === 'image/webp' && out.size < blob.size ? out : blob;
+  } catch {
+    return blob;
+  }
+}
+
 const toDataUri = (blob: Blob) =>
   new Promise<string>((res, rej) => {
     const r = new FileReader();
@@ -249,6 +312,8 @@ function readme(doc: BookDoc) {
   index.html   书本身（文字和版式都在里面）
   assets/      图片与音乐
   fonts/       这本书用到的字体片段
+  cover.jpg    分享链接时显示的封面图
+  icon.jpg     浏览器标签页上的小图标
 `;
 }
 

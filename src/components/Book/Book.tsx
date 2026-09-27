@@ -20,6 +20,8 @@ export interface BookHandle {
   goToView(view: number): void;
   next(): void;
   prev(): void;
+  /** Number of views (cover, each spread, back cover…) in the current layout. */
+  viewCount(): number;
 }
 
 interface Props {
@@ -30,9 +32,13 @@ interface Props {
   onView?: (view: number, built: BuiltBook) => void;
   /** Called when the reader opens the book (first page turn from the cover). */
   onOpen?: () => void;
+  /** A view the reader stopped at last time: offers "continue where you left off" on the closed book. */
+  resumeView?: number;
+  /** Being recorded (video / long image): no hints, buttons or next-page polaroid on the table. */
+  recording?: boolean;
 }
 
-export function Book({ book, reserveBottom = 0, handle, onView, onOpen }: Props) {
+export function Book({ book, reserveBottom = 0, handle, onView, onOpen, resumeView, recording }: Props) {
   const theme = getTheme(book.themeId);
   const editing = !!useEdit();
   const { layout, pageWidth: W, pageHeight: H } = useBookSize(reserveBottom);
@@ -175,20 +181,39 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen }: Props)
     }, reduced ? 50 : 420);
   }, [reduced, dispatch, settle]);
 
+  const jumpToView = useCallback(
+    (v: number) => {
+      const i = firstPageOfView(built, v);
+      flipRef.current?.jump(i);
+      live.current.index = i;
+      viewRef.current = built.pages[i]?.view ?? 0;
+      dispatch({ type: 'reset', index: i, last: live.current.last });
+      settle();
+    },
+    [built, dispatch, settle],
+  );
+
+  // "Continue where you left off": the same fade as "read again", landing on the saved view.
+  const resume = useCallback(() => {
+    if (phaseRef.current !== 'closed' || !resumeView) return;
+    onOpenRef.current?.();
+    setTurningOver(true);
+    window.setTimeout(() => {
+      jumpToView(resumeView);
+      onViewRef.current?.(viewRef.current, built);
+      window.setTimeout(() => setTurningOver(false), 60);
+    }, reduced ? 50 : 420);
+  }, [resumeView, reduced, jumpToView, built]);
+
   useImperativeHandle(
     handle,
     () => ({
-      goToView: (v: number) => {
-        const i = firstPageOfView(built, v);
-        flipRef.current?.jump(i);
-        live.current.index = i;
-        dispatch({ type: 'reset', index: i, last: live.current.last });
-        settle();
-      },
+      goToView: jumpToView,
       next,
       prev,
+      viewCount: () => built.views.length,
     }),
-    [built, dispatch, settle, next, prev],
+    [jumpToView, next, prev, built],
   );
 
   /* ---------------------------------------------------------------- preload */
@@ -240,6 +265,7 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen }: Props)
       data-layout={layout}
       data-turning={turningOver || undefined}
       data-editing={editing || undefined}
+      data-recording={recording || undefined}
       style={{ ...palette, ['--reserve' as string]: `${reserveBottom}px` }}
     >
       <div
@@ -279,7 +305,7 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen }: Props)
             pageHeight={H}
             startIndex={startIndex}
             flippingTime={flippingTime}
-            showCorners={!reduced}
+            showCorners={!reduced && !recording}
             interactive={!editing}
             renderPage={renderPage}
             onFlip={onFlip}
@@ -299,7 +325,7 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen }: Props)
         />
 
         <PhotoPreview
-          image={reading ? preview : undefined}
+          image={reading && !recording ? preview : undefined}
           onClick={next}
           label="翻到下一页"
           snapshotOf={editing && reading ? storySpread : undefined}
@@ -308,6 +334,11 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen }: Props)
         <div className={styles.hint} data-show={m.phase === 'closed' || undefined}>
           轻点封面，打开这本书
         </div>
+        {!!resumeView && resumeView < built.views.length - 1 && (
+          <button type="button" className={styles.resume} data-show={(m.phase === 'closed' && !turningOver) || undefined} onClick={resume}>
+            接着上次读下去 →
+          </button>
+        )}
         <button type="button" className={styles.again} data-show={m.phase === 'ended' || undefined} onClick={readAgain}>
           再读一遍
         </button>

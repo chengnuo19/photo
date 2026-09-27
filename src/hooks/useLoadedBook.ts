@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { sampleBook } from '../data/sampleBook';
-import { listThemes } from '../themes';
+import { listThemes, loadTheme, sampleThemeId } from '../themes';
 import type { BookDoc } from '../data/schema';
 import { loadAssets, resolveBook } from '../storage/assets';
 import { getBook } from '../storage/db';
@@ -34,6 +34,7 @@ export function useLoadedBook(id: string) {
     setStatus('loading');
     (async () => {
       if (isSampleId(id)) {
+        await loadTheme(sampleThemeId(id)).catch(() => undefined);
         const s = sampleById(id);
         if (alive) {
           setDoc(s ?? null);
@@ -47,7 +48,7 @@ export function useLoadedBook(id: string) {
         setStatus('missing');
         return;
       }
-      await loadAssets(stored.doc);
+      await Promise.all([loadAssets(stored.doc), loadTheme(stored.doc.themeId).catch(() => undefined)]);
       if (!alive) return;
       setDoc(stored.doc);
       setAssetsVersion((v) => v + 1);

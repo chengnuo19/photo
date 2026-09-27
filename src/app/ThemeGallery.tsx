@@ -4,9 +4,12 @@ import { QuietButton, QuietLink } from '../components/ui/QuietButton';
 import { createBook, spreadsFromImages } from '../data/bookOps';
 import type { BookDoc } from '../data/schema';
 import { useFontsReady } from '../hooks/useFontsReady';
-import { importImage } from '../storage/assets';
+import { importImages, importLabel } from '../storage/assets';
+import { explainStorageError, requestPersist } from '../storage/quota';
+import { Toast, type ToastState } from '../components/ui/Toast';
+import { failedNote, setNote } from './notes';
 import { putBook } from '../storage/db';
-import { listThemes, themeStyle } from '../themes';
+import { listThemes, themeStyle, useThemes } from '../themes';
 import { ThemeContext } from '../themes/context';
 import { ensureFonts } from '../themes/fonts';
 import type { Theme } from '../themes/types';
@@ -19,14 +22,15 @@ import styles from './ThemeGallery.module.css';
  * rendered by its own cover. Choose one (and a palette), then add photos or start blank.
  */
 export function ThemeGallery() {
-  const themes = useMemo(() => listThemes(), []);
+  const loaded = useThemes('all');
+  const themes = useMemo(() => (loaded ? listThemes() : []), [loaded]);
   const samples = useMemo(() => new Map(themes.map((t) => [t.id, t.sample()])), [themes]);
   useEffect(() => {
     themes.forEach((t) => void ensureFonts(t.fonts, t.id));
   }, [themes]);
   const [picked, setPicked] = useState<Theme | null>(null);
   const [palette, setPalette] = useState<string | undefined>();
-  const [busy, setBusy] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
   const ready = useFontsReady(
     '选一本样书经典影视' + themes.map((t) => t.name + t.blurb + samples.get(t.id)!.meta.title).join(''),
     [...new Set(themes.flatMap((t) => t.fonts))],
@@ -37,15 +41,21 @@ export function ThemeGallery() {
     const book = createBook(picked.id);
     book.paletteId = palette;
     const images = files.filter((f) => f.type.startsWith('image/'));
-    if (images.length) {
-      setBusy(`正在整理 ${images.length} 张照片…`);
-      const imported = [];
-      for (const f of images) imported.push(await importImage(f));
-      book.spreads = spreadsFromImages(imported, picked.id);
-      book.cover.image = { src: imported[0].src, thumb: imported[0].thumb, alt: '封面' };
+    void requestPersist();
+    try {
+      if (images.length) {
+        const batch = await importImages(images, (done, total) => setToast({ text: importLabel(done, total), progress: done / total }));
+        if (batch.error) throw batch.error;
+        book.spreads = spreadsFromImages(batch.images, picked.id);
+        const first = batch.images[0];
+        if (first) book.cover.image = { src: first.src, thumb: first.thumb, alt: '封面' };
+        if (batch.failed.length) setNote(failedNote(batch.failed));
+      }
+      await putBook(book);
+      go(href.edit(book.id));
+    } catch (err) {
+      setToast({ text: explainStorageError(err), tone: 'warn' });
     }
-    await putBook(book);
-    go(href.edit(book.id));
   };
 
   const mini = (t: Theme, doc: BookDoc, big = false) => {
@@ -62,7 +72,7 @@ export function ThemeGallery() {
   };
 
   return (
-    <main className={app.room} data-ready={ready || undefined}>
+    <main className={app.room} data-ready={(ready && loaded) || undefined}>
       <Masthead shelfHref={href.shelf()} right={<QuietLink href={href.shelf()}>回到书架</QuietLink>} />
       <section className={styles.gallery}>
         <header className={styles.head}>
@@ -142,7 +152,7 @@ export function ThemeGallery() {
         </div>
       )}
 
-      {busy && <div className={styles.busy}>{busy}</div>}
+      <Toast toast={toast} placement="bottom" />
     </main>
   );
 }

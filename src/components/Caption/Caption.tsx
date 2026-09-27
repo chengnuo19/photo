@@ -65,7 +65,7 @@ export function Caption({ spread, visible, viewKey, stampOnly }: Props) {
 
   const stamp = [s?.stamp?.date, s?.stamp?.place].filter(Boolean).join(' · ');
   return (
-    <p className={styles.caption} data-show={show || undefined} data-hand={hand || undefined}>
+    <p className={styles.caption} data-show={show || undefined} data-hand={hand || undefined} data-mb-caption>
       {s?.caption && !stampOnly && <span className={styles.text}>{s.caption}</span>}
       {stamp && <span className={styles.stamp}>{stamp}</span>}
     </p>

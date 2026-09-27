@@ -17,6 +17,9 @@
   right: 0;
   z-index: 40;
   min-width: 240px;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 10px 8px;
   display: flex;
   flex-direction: column;
@@ -27,7 +30,8 @@
     0 12px 28px -10px rgba(60, 40, 20, 0.28);
 }
 
-.menu > button {
+.menu > button,
+.menu > a {
   color: var(--ink);
 }
 
@@ -62,20 +66,6 @@
   pointer-events: none;
 }
 
-.busy {
-  position: fixed;
-  left: 50%;
-  top: 56px;
-  z-index: 60;
-  transform: translateX(-50%);
-  padding: 9px 18px;
-  background: rgba(252, 250, 244, 0.97);
-  box-shadow: 0 6px 20px -8px rgba(60, 40, 20, 0.3);
-  font-family: var(--font-hand);
-  font-size: 13px;
-  letter-spacing: 0.14em;
-  color: var(--ink-soft);
-}
 
 .styleMenu {
   min-width: 320px;
@@ -171,4 +161,14 @@
 .giftFields input:focus {
   outline: none;
   border-color: var(--room-soft);
+}
+
+.saveError {
+  color: #9a3a22;
+}
+
+.segmented {
+  display: flex;
+  gap: 2px;
+  margin-left: -6px;
 }

@@ -6,15 +6,19 @@ import { PageStrip } from '../components/Editor/PageStrip';
 import { Scene } from '../components/Scene/Scene';
 import { Masthead } from '../components/Masthead/Masthead';
 import { Dot, QuietButton, QuietLink } from '../components/ui/QuietButton';
+import { Toast, type ToastState } from '../components/ui/Toast';
 import type { BuiltBook } from '../data/buildPages';
 import { duplicateBook, moveSpread, spreadsFromImages } from '../data/bookOps';
 import type { BookDoc } from '../data/schema';
-import { fontsOf, getTheme, listThemes, themeStyle } from '../themes';
-import { download, exportBook, type ExportKind } from '../export/exportBook';
+import { fontsOf, getTheme, listThemes, themeStyle, useThemes } from '../themes';
+import { download, exportBook, type ExportKind, type ExportQuality } from '../export/exportBook';
 import { fontSample, useFontsReady } from '../hooks/useFontsReady';
 import { isSampleId, useLoadedBook } from '../hooks/useLoadedBook';
-import { importAudio, importImage, resolveBook, type ImportedImage } from '../storage/assets';
+import { ImageDecodeError, importAudio, importImage, importImages, importLabel, resolveBook } from '../storage/assets';
+import { backupBooks } from '../storage/backup';
 import { putBook } from '../storage/db';
+import { explainStorageError, fmtBytes, isLow, requestPersist, storageInfo } from '../storage/quota';
+import { failedNote, takeNote } from './notes';
 import { go, href } from './router';
 import app from './App.module.css';
 import styles from './EditorPage.module.css';
@@ -44,6 +48,7 @@ export function EditorPage({ id }: { id: string }) {
 }
 
 function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: BookDoc) => void }) {
+  useThemes('all'); // the style menu lists every theme
   const [doc, setDocState] = useState(initial);
   const docRef = useRef(doc);
   const past = useRef<BookDoc[]>([]);
@@ -86,15 +91,58 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
   }, [commit]);
 
   // ---- autosave
-  const [saved, setSaved] = useState<'saved' | 'saving'>('saved');
+  const [saved, setSaved] = useState<'saved' | 'saving' | 'failed'>('saved');
+  const [saveError, setSaveError] = useState<string | null>(null);
   useEffect(() => {
     if (doc === initial) return;
     setSaved('saving');
     const t = window.setTimeout(() => {
-      void putBook(doc).then(() => setSaved('saved'));
+      putBook(doc).then(
+        () => {
+          setSaved('saved');
+          setSaveError(null);
+        },
+        (err) => {
+          setSaved('failed');
+          setSaveError(explainStorageError(err));
+        },
+      );
     }, 450);
     return () => window.clearTimeout(t);
   }, [doc, initial]);
+
+  // Leaving with unsaved changes: the browser asks first.
+  useEffect(() => {
+    if (saved === 'saved') return;
+    const onLeave = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', onLeave);
+    return () => window.removeEventListener('beforeunload', onLeave);
+  }, [saved]);
+
+  // Warn once when storage is nearly full (before a save fails).
+  const [lowSpace, setLowSpace] = useState<string | null>(null);
+  const checkSpace = useCallback(async () => {
+    const info = await storageInfo();
+    setLowSpace(isLow(info) && info ? `存储空间快满了（已用 ${fmtBytes(info.usage)} / ${fmtBytes(info.quota)}），建议先备份这本书` : null);
+  }, []);
+  useEffect(() => {
+    void checkSpace();
+  }, [checkSpace]);
+
+  const [toast, setToast] = useState<ToastState | null>(() => {
+    const note = takeNote();
+    return note ? { text: note, tone: 'warn' } : null;
+  });
+  const setBusy = useCallback((text: string | null) => setToast(text ? { text } : null), []);
+  const flash = useCallback((text: string, tone?: ToastState['tone'], ms = tone === 'warn' ? 6500 : 2400) => {
+    setToast({ text, tone });
+    window.setTimeout(() => setToast((t) => (t?.text === text ? null : t)), ms);
+  }, []);
+  useEffect(() => {
+    if (toast?.tone !== 'warn') return;
+    const t = window.setTimeout(() => setToast((x) => (x === toast ? null : x)), 8000);
+    return () => window.clearTimeout(t);
+  }, [toast]);
 
   // ---- files
   const fileInput = useRef<HTMLInputElement>(null);
@@ -109,11 +157,19 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
       input.click();
     });
 
-  const importFile = useCallback(async (f: File) => {
-    const im = await importImage(f);
-    setAssetsTick((t) => t + 1);
-    return im;
-  }, []);
+  const importFile = useCallback(
+    async (f: File) => {
+      try {
+        const im = await importImage(f);
+        setAssetsTick((t) => t + 1);
+        return im;
+      } catch (err) {
+        flash(err instanceof ImageDecodeError ? failedNote([f.name]) : explainStorageError(err), 'warn');
+        return null;
+      }
+    },
+    [flash],
+  );
 
   const api: EditApi = useMemo(
     () => ({
@@ -133,16 +189,20 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
   const onView = useCallback((idx: number, built: BuiltBook) => setView({ idx, built }), []);
   const pendingJump = useRef<string | null>(null);
 
-  const [busy, setBusy] = useState<string | null>(null);
 
   const addImages = useCallback(
     async (files: File[]) => {
       const images = files.filter((f) => f.type.startsWith('image/'));
       if (!images.length) return;
-      setBusy(`正在整理 ${images.length} 张照片…`);
-      try {
-        const imported: ImportedImage[] = [];
-        for (const f of images) imported.push(await importImage(f));
+      void requestPersist();
+      const batch = await importImages(images, (done, total) => setToast({ text: importLabel(done, total), progress: done / total }));
+      const imported = batch.images;
+      if (batch.error) flash(explainStorageError(batch.error), 'warn');
+      else if (batch.failed.length) flash(failedNote(batch.failed), 'warn');
+      else setToast(null);
+      void checkSpace();
+      if (!imported.length) return;
+      {
         setAssetsTick((t) => t + 1);
         const spreads = spreadsFromImages(imported, docRef.current.themeId);
         const cur = view.built?.views[view.idx];
@@ -154,11 +214,9 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
           }
         });
         pendingJump.current = spreads[0]?.id ?? null;
-      } finally {
-        setBusy(null);
       }
     },
-    [update, view],
+    [update, view, flash, checkSpace],
   );
 
   const removeSpread = useCallback(
@@ -205,24 +263,55 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
   const setMusic = async () => {
     const [f] = await openPicker('audio/*', false);
     if (!f) return;
-    const src = await importAudio(f);
+    let src: string;
+    try {
+      src = await importAudio(f);
+    } catch (err) {
+      flash(explainStorageError(err), 'warn');
+      return;
+    }
     setAssetsTick((t) => t + 1);
     update((d) => void (d.music = { src, title: f.name.replace(/\.[^.]+$/, '') }));
   };
 
   // ---- export
   const [menu, setMenu] = useState<null | 'export' | 'music' | 'style'>(null);
+  const [quality, setQuality] = useState<ExportQuality>(() => {
+    try {
+      return localStorage.getItem('mb-export-quality') === 'high' ? 'high' : 'compact';
+    } catch {
+      return 'compact';
+    }
+  });
+  const pickQuality = (q: ExportQuality) => {
+    setQuality(q);
+    try {
+      localStorage.setItem('mb-export-quality', q);
+    } catch {
+      /* remembered for this visit only */
+    }
+  };
   const runExport = async (kind: ExportKind) => {
     setMenu(null);
     try {
       await putBook(docRef.current);
-      const res = await exportBook(docRef.current, kind, setBusy);
-      setBusy(`完成，${(res.blob.size / 1024 / 1024).toFixed(1)} MB`);
+      const res = await exportBook(docRef.current, kind, setBusy, { quality });
       download(res);
-      window.setTimeout(() => setBusy(null), 2400);
+      flash(`完成，${fmtBytes(res.blob.size)}`);
     } catch (err) {
-      setBusy(`导出失败：${(err as Error).message}`);
-      window.setTimeout(() => setBusy(null), 5000);
+      flash(`导出失败：${(err as Error).message}`, 'warn');
+    }
+  };
+
+  const runBackup = async () => {
+    setMenu(null);
+    try {
+      await putBook(docRef.current);
+      const res = await backupBooks([docRef.current], setBusy);
+      download(res);
+      flash(`备份完成，${fmtBytes(res.blob.size)}。换电脑或浏览器后，在书架点“从备份恢复”即可继续编辑。`, undefined, 4200);
+    } catch (err) {
+      flash(`备份失败：${(err as Error).message}`, 'warn');
     }
   };
 
@@ -262,7 +351,19 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
         <Masthead
           book={resolved}
           shelfHref={href.shelf()}
-          footer={saved === 'saving' ? '保存中…' : '已自动保存在这台设备上'}
+          footer={
+            saved === 'failed' ? (
+              <span className={styles.saveError}>
+                {saveError} <QuietButton onClick={() => void runBackup()}>立即备份</QuietButton>
+              </span>
+            ) : lowSpace ? (
+              <span className={styles.saveError}>{lowSpace}</span>
+            ) : saved === 'saving' ? (
+              '保存中…'
+            ) : (
+              '已自动保存在这台设备上'
+            )
+          }
           right={
             <>
               <span className={styles.menuWrap}>
@@ -396,10 +497,32 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
                     )}
                     <p className={styles.menuNote}>读者打开书之前，会先拆开一份{getTheme(doc.themeId).name}风格的包装</p>
                     <p className={styles.menuNote}>导出</p>
+                    <div className={styles.segmented} role="radiogroup" aria-label="照片画质">
+                      <QuietButton role="radio" aria-checked={quality === 'compact'} active={quality === 'compact'} onClick={() => pickQuality('compact')}>
+                        精简
+                      </QuietButton>
+                      <QuietButton role="radio" aria-checked={quality === 'high'} active={quality === 'high'} onClick={() => pickQuality('high')}>
+                        高清
+                      </QuietButton>
+                    </div>
+                    <p className={styles.menuNote}>
+                      {quality === 'compact' ? '照片压到长边 1400，体积约减半，手机上打开更快' : '保留原始清晰度，适合在电脑大屏上看'}
+                    </p>
                     <QuietButton onClick={() => void runExport('zip')}>网站文件夹（.zip）</QuietButton>
                     <p className={styles.menuNote}>解压后拖到 Netlify Drop 即得分享链接，也可直接双击打开</p>
                     <QuietButton onClick={() => void runExport('html')}>单个网页文件（.html）</QuietButton>
                     <p className={styles.menuNote}>一个文件就是整本书，适合直接发送</p>
+                    <p className={styles.menuNote}>发微信</p>
+                    <QuietLink href={href.record(doc.id, 'video')} onClick={() => void putBook(docRef.current)}>
+                      翻书视频（.mp4）
+                    </QuietLink>
+                    <QuietLink href={href.record(doc.id, 'image')} onClick={() => void putBook(docRef.current)}>
+                      长图（.jpg）
+                    </QuietLink>
+                    <p className={styles.menuNote}>微信里打不开网页文件：录一段自动翻页的视频，或拼一张长图直接发送（需电脑版 Chrome / Edge）</p>
+                    <p className={styles.menuNote}>给自己</p>
+                    <QuietButton onClick={() => void runBackup()}>备份这本书（.mbook）</QuietButton>
+                    <p className={styles.menuNote}>可以恢复后继续编辑；换电脑、换浏览器前请先备份</p>
                   </div>
                 )}
               </span>
@@ -433,7 +556,7 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
         />
 
         {over && <div className={styles.drop}>松开，把照片放进书里</div>}
-        {busy && <div className={styles.busy}>{busy}</div>}
+        <Toast toast={toast} />
         {menu && <div className={styles.scrim} onClick={() => setMenu(null)} />}
       </main>
     </EditContext.Provider>

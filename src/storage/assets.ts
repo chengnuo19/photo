@@ -60,12 +60,13 @@ async function encode(bitmap: ImageBitmap, maxEdge: number, quality: number): Pr
  * size, re-encode as WebP, make a thumbnail and read the capture date.
  */
 export async function importImage(file: File): Promise<ImportedImage> {
-  const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-  const [blob, thumb, takenAt] = await Promise.all([
-    encode(bitmap, MAX_EDGE, 0.86),
-    encode(bitmap, THUMB_EDGE, 0.8),
-    readTakenAt(file),
-  ]);
+  let bitmap: ImageBitmap, blob: Blob, thumb: Blob, takenAt: Date | undefined;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    [blob, thumb, takenAt] = await Promise.all([encode(bitmap, MAX_EDGE, 0.86), encode(bitmap, THUMB_EDGE, 0.8), readTakenAt(file)]);
+  } catch {
+    throw new ImageDecodeError(file.name);
+  }
   const asset: StoredAsset = {
     id: uid(),
     kind: 'image',
@@ -81,6 +82,55 @@ export async function importImage(file: File): Promise<ImportedImage> {
   await putAsset(asset);
   register(asset);
   return { src: assetRef(asset.id), thumb: thumbRef(asset.id), width: asset.width!, height: asset.height!, takenAt, name: file.name };
+}
+
+/** The file is not an image this browser can read (HEIC in Chrome, a broken file…). */
+export class ImageDecodeError extends Error {
+  constructor(name: string) {
+    super(`无法读取图片：${name}`);
+    this.name = 'ImageDecodeError';
+  }
+}
+
+export interface ImportBatch {
+  images: ImportedImage[];
+  /** Names of files that could not be read (e.g. HEIC in browsers without HEIC support). */
+  failed: string[];
+  /** Set when storage itself failed (quota, private mode) — the batch stops there. */
+  error?: unknown;
+}
+
+/**
+ * Import many photos with progress. A few run at once (decoding + WebP encoding dominate),
+ * results keep the original order, unreadable files are skipped and reported, and a storage
+ * failure stops the batch instead of failing every remaining file the same way.
+ */
+export async function importImages(files: File[], onProgress: (done: number, total: number) => void, concurrency = 3): Promise<ImportBatch> {
+  const results: (ImportedImage | null)[] = new Array(files.length).fill(null);
+  const failed: string[] = [];
+  let error: unknown;
+  let next = 0;
+  let done = 0;
+  onProgress(0, files.length);
+  const worker = async () => {
+    while (next < files.length && !error) {
+      const i = next++;
+      try {
+        results[i] = await importImage(files[i]);
+      } catch (err) {
+        if (err instanceof ImageDecodeError) failed.push(files[i].name);
+        else error = err; // saving failed: the next files would fail the same way
+      }
+      onProgress(++done, files.length);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, files.length) }, worker));
+  return { images: results.filter((r): r is ImportedImage => !!r), failed, error };
+}
+
+/** "正在整理照片 12/40" with a text progress bar the busy toast can show. */
+export function importLabel(done: number, total: number) {
+  return `正在整理照片 ${done}/${total}…`;
 }
 
 export async function importAudio(file: File): Promise<string> {

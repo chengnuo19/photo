@@ -11,7 +11,7 @@ export interface EditApi {
   update: (recipe: (draft: BookDoc) => void) => void;
   /** Open the file picker for one image. */
   pickImage: () => Promise<ImportedImage | null>;
-  importFile: (file: File) => Promise<ImportedImage>;
+  importFile: (file: File) => Promise<ImportedImage | null>;
 }
 
 export const EditContext = createContext<EditApi | null>(null);

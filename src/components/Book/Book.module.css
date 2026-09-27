@@ -16,7 +16,11 @@
 }
 
 .stage[data-editing] .hint,
-.stage[data-editing] .again {
+.stage[data-editing] .resume,
+.stage[data-editing] .again,
+.stage[data-recording] .hint,
+.stage[data-recording] .resume,
+.stage[data-recording] .again {
   display: none;
 }
 
@@ -140,6 +144,7 @@
 
 /* ------------------------------------------------------------------ quiet text below the book */
 .hint,
+.resume,
 .again {
   position: absolute;
   left: 50%;
@@ -164,8 +169,31 @@
   transition-delay: 1400ms;
 }
 
-.again {
+.again,
+.resume {
   cursor: pointer;
+}
+
+/* under the "tap the cover" hint, on the closed cover */
+.resume {
+  top: calc(100% + max(22px, 3.2vh) + 30px);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 4px;
+}
+
+.resume[data-show] {
+  opacity: 0.75;
+  pointer-events: auto;
+  transition-delay: 1700ms;
+}
+
+.resume:hover,
+.resume:focus-visible {
+  opacity: 1;
+  color: var(--room-strong);
 }
 
 .again[data-show] {

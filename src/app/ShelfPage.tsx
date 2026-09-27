@@ -1,15 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Masthead } from '../components/Masthead/Masthead';
 import { Dot, QuietButton, QuietLink } from '../components/ui/QuietButton';
+import { Toast, type ToastState } from '../components/ui/Toast';
 import { createBook, duplicateBook, spreadsFromImages } from '../data/bookOps';
 import { sampleBook } from '../data/sampleBook';
 import type { BookDoc } from '../data/schema';
 import { useFontsReady } from '../hooks/useFontsReady';
-import { importImage, loadAssets, resolveBook } from '../storage/assets';
+import { download } from '../export/exportBook';
+import { importImages, importLabel, loadAssets, resolveBook } from '../storage/assets';
+import { backupBooks, restoreBackup } from '../storage/backup';
 import { deleteBook, listBooks, putBook } from '../storage/db';
-import { getTheme, themeStyle } from '../themes';
+import { explainStorageError, fmtBytes, isLow, requestPersist, storageInfo, type StorageInfo } from '../storage/quota';
+import { getTheme, loadThemes, themeStyle } from '../themes';
 import { ThemeContext } from '../themes/context';
 import { ensureFonts } from '../themes/fonts';
+import { failedNote, setNote } from './notes';
 import { go, href } from './router';
 import app from './App.module.css';
 import styles from './ShelfPage.module.css';
@@ -22,36 +27,76 @@ interface ShelfBook {
 
 export function ShelfPage() {
   const [books, setBooks] = useState<ShelfBook[] | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
   const [over, setOver] = useState(false);
+  const [storage, setStorage] = useState<StorageInfo | null>(null);
+  const restoreInput = useRef<HTMLInputElement>(null);
+
+  const flash = (text: string, tone?: ToastState['tone'], ms = tone === 'warn' ? 6000 : 2600) => {
+    setToast({ text, tone });
+    window.setTimeout(() => setToast((t) => (t?.text === text ? null : t)), ms);
+  };
   const ready = useFontsReady('回忆绘本书架新建一本书把照片拖到这里' + sampleBook.meta.coverLines.join(''));
 
   const refresh = async () => {
     const stored = await listBooks();
-    await Promise.all(stored.map((b) => loadAssets(b.doc)));
+    await Promise.all([...stored.map((b) => loadAssets(b.doc)), loadThemes(stored.map((b) => b.doc.themeId)).catch(() => undefined)]);
     stored.forEach((b) => void ensureFonts(getTheme(b.doc.themeId).fonts, b.doc.themeId));
     setBooks([
       ...stored.map((b) => ({ doc: b.doc, resolved: resolveBook(b.doc) })),
       { doc: sampleBook, resolved: sampleBook, sample: true },
     ]);
+    // someone who already has books is exactly who should not lose them
+    if (stored.length) await requestPersist();
+    setStorage(await storageInfo());
   };
   useEffect(() => {
     refresh().catch(() => setBooks([{ doc: sampleBook, resolved: sampleBook, sample: true }]));
   }, []);
 
   const createFrom = async (files: File[]) => {
+    if (files.some(isBackup)) return restore(files.filter(isBackup));
     const images = files.filter((f) => f.type.startsWith('image/'));
     const book = createBook();
-    if (images.length) {
-      setBusy(`正在整理 ${images.length} 张照片…`);
-      const imported = [];
-      for (const f of images) imported.push(await importImage(f));
-      book.spreads = spreadsFromImages(imported);
-      if (imported[0]) book.cover.image = { src: imported[0].src, thumb: imported[0].thumb, alt: '封面' };
+    void requestPersist();
+    try {
+      if (images.length) {
+        const batch = await importImages(images, (done, total) => setToast({ text: importLabel(done, total), progress: done / total }));
+        if (batch.error) throw batch.error;
+        book.spreads = spreadsFromImages(batch.images);
+        const first = batch.images[0];
+        if (first) book.cover.image = { src: first.src, thumb: first.thumb, alt: '封面' };
+        if (batch.failed.length) setNote(failedNote(batch.failed));
+      }
+      await putBook(book);
+      setToast(null);
+      go(href.edit(book.id));
+    } catch (err) {
+      flash(explainStorageError(err), 'warn');
     }
-    await putBook(book);
-    setBusy(null);
-    go(href.edit(book.id));
+  };
+
+  const restore = async (files: File[]) => {
+    try {
+      const ids: string[] = [];
+      for (const f of files) ids.push(...(await restoreBackup(f, (text) => setToast({ text }))));
+      void requestPersist();
+      await refresh();
+      flash(`已恢复 ${ids.length} 本书`);
+    } catch (err) {
+      const e = err as Error;
+      flash(e.message?.startsWith('这') ? e.message : explainStorageError(err), 'warn');
+    }
+  };
+
+  const backup = async (docs: BookDoc[]) => {
+    try {
+      const res = await backupBooks(docs, (text) => setToast({ text }));
+      download(res);
+      flash(`备份完成，${fmtBytes(res.blob.size)}。换电脑或换浏览器后，在书架点“从备份恢复”。`, undefined, 4200);
+    } catch (err) {
+      flash(`备份失败：${(err as Error).message}`, 'warn');
+    }
   };
 
   const useAsTemplate = async () => {
@@ -66,6 +111,8 @@ export function ShelfPage() {
     await deleteBook(b.id);
     await refresh();
   };
+
+  const own = (books ?? []).filter((b) => !b.sample).map((b) => b.doc);
 
   return (
     <main
@@ -86,11 +133,20 @@ export function ShelfPage() {
         void createFrom([...e.dataTransfer.files]);
       }}
     >
-      <Masthead footer="照片只保存在这台设备的浏览器里" />
+      <Masthead footer={<StorageNote info={storage} hasBooks={own.length > 0} />} />
       <section className={styles.shelf}>
         <header className={styles.head}>
           <h1>书架</h1>
           <p>把一次旅行、一段日子，做成一本可以翻开的书。</p>
+          <p className={styles.tools}>
+            <QuietButton onClick={() => restoreInput.current?.click()}>从备份恢复</QuietButton>
+            {own.length > 1 && (
+              <>
+                <Dot />
+                <QuietButton onClick={() => void backup(own)}>备份全部</QuietButton>
+              </>
+            )}
+          </p>
         </header>
 
         <ul className={styles.row}>
@@ -134,6 +190,10 @@ export function ShelfPage() {
                     <>
                       <QuietLink href={href.edit(b.doc.id)}>编辑</QuietLink>
                       <Dot />
+                      <QuietButton onClick={() => void backup([b.doc])} title="备份成 .mbook 文件，换电脑或浏览器后可以恢复继续编辑">
+                        备份
+                      </QuietButton>
+                      <Dot />
                       <QuietButton onClick={() => void remove(b.doc)}>删除</QuietButton>
                     </>
                   )}
@@ -144,7 +204,32 @@ export function ShelfPage() {
         </ul>
       </section>
 
-      {busy && <div className={styles.busy}>{busy}</div>}
+      <input
+        ref={restoreInput}
+        type="file"
+        accept=".mbook,application/zip"
+        multiple
+        className="visually-hidden"
+        tabIndex={-1}
+        onChange={(e) => {
+          const files = [...(e.target.files ?? [])];
+          e.target.value = '';
+          if (files.length) void restore(files);
+        }}
+      />
+      <Toast toast={toast} placement="bottom" />
     </main>
   );
+}
+
+const isBackup = (f: File) => /\.mbook$/i.test(f.name);
+
+/** "照片只保存在这台设备的浏览器里 · 已用 84 MB" — and a warning when storage is at risk. */
+function StorageNote({ info, hasBooks }: { info: StorageInfo | null; hasBooks: boolean }) {
+  const base = '照片只保存在这台设备的浏览器里';
+  if (!info || !hasBooks) return <>{base}</>;
+  const used = `已用 ${fmtBytes(info.usage)}`;
+  if (isLow(info)) return <span className={styles.warn}>存储空间快满了（{used}，共 {fmtBytes(info.quota)}），请备份后删除不用的书</span>;
+  if (!info.persisted) return <>{base} · {used} · 浏览器清理空间时可能删掉它们，记得备份</>;
+  return <>{base} · {used} · 已设为持久保存</>;
 }

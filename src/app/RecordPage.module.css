@@ -1,0 +1,84 @@
+/* While recording nothing on the table reacts to the mouse (no corner folds in the video). */
+.room[data-running] * {
+  pointer-events: none !important;
+  cursor: none !important;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--room) 55%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.panel {
+  width: min(460px, 100%);
+  padding: 28px 30px 22px;
+  background: rgba(253, 251, 246, 0.98);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 20px 50px -20px rgba(50, 35, 20, 0.45);
+  font-family: var(--font-cn);
+  font-size: 14px;
+  line-height: 1.8;
+  letter-spacing: 0.06em;
+  color: #4a3d30;
+}
+
+.panel h1 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.4em;
+}
+
+.panel p {
+  margin: 0 0 12px;
+}
+
+.panel p[data-tone='warn'] {
+  color: #8a2f1c;
+}
+
+.panel ol {
+  margin: 0 0 16px;
+  padding-left: 1.3em;
+  font-family: var(--font-hand);
+  font-size: 13.5px;
+  color: #6b5a47;
+}
+
+.panel b {
+  font-weight: 600;
+  color: #3a2e22;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 6px 0 0 -6px !important;
+}
+
+.primary {
+  padding: 6px 18px !important;
+  border: 1px solid currentColor !important;
+  font-size: 14px !important;
+}
+
+/* a tiny note in the corner: it is recorded too, so keep it out of the book's way */
+.live {
+  position: fixed;
+  left: 16px;
+  bottom: 12px;
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--room-ink);
+  opacity: 0.55;
+}
