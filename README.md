@@ -122,6 +122,10 @@ node scripts/e2e-safety.mjs <输出目录> <照片目录>
 node scripts/record-check.mjs <输出目录> [书id] [image|video|both]
 ```
 
-`e2e-safety` 检查导入进度与读不了的文件、存储提示、备份 → 删除 → 恢复、续读；`record-check` 用 Chrome 的 `--auto-accept-this-tab-capture` 无人值守地录一次长图 / 视频。所有脚本都可以用环境变量 `BASE` 指向别的端口。
+```bash
+node scripts/flaky-images.mjs <输出目录> [书id] [失败次数]
+```
+
+`flaky-images` 让每张照片的前几次请求都断网失败，检查照片最终都能自动重试加载出来。`e2e-safety` 检查导入进度与读不了的文件、存储提示、备份 → 删除 → 恢复、续读；`record-check` 用 Chrome 的 `--auto-accept-this-tab-capture` 无人值守地录一次长图 / 视频。所有脚本都可以用环境变量 `BASE` 指向别的端口。
 
 截图脚本使用本机安装的 Chrome（playwright-core，不额外下载浏览器）。
