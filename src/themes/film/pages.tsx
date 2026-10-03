@@ -8,6 +8,7 @@ import { sampleBook } from '../../data/sampleBook';
 import { seeded } from '../context';
 import type { DecorProps, PageProps, ThemeDef } from '../types';
 import s from './film.module.css';
+import { SignatureMark } from '../../components/Signature/Signature';
 
 /** Orange camera date imprint, e.g. 9.14 → ’24 9 14 */
 function DateImprint({ spread, year }: { spread?: Spread; year?: string }) {
@@ -208,6 +209,7 @@ function Letter({ book }: PageProps) {
           )}
           <div className={s.letterSign}>
             <EditableText value={l.signoff} onCommit={e.letter('signoff')} placeholder="署名" />
+            <SignatureMark signature={l.signature} />
             <EditableText className={s.letterDate} value={l.date} onCommit={e.letter('date')} placeholder="日期" />
           </div>
         </div>

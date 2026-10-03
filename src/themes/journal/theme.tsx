@@ -23,6 +23,7 @@ import {
   Washi,
 } from './ornaments';
 import s from './journal.module.css';
+import { SignatureMark } from '../../components/Signature/Signature';
 
 /* ------------------------------------------------------------------ covers */
 
@@ -126,6 +127,7 @@ function Letter({ book }: PageProps) {
           <EditableText className={s.lBody} value={l.body} onCommit={e.letter('body')} placeholder="信的内容" multiline />
           <div className={s.lSign}>
             <EditableText value={l.signoff} onCommit={e.letter('signoff')} placeholder="署名" />
+            <SignatureMark signature={l.signature} />
             <EditableText className={s.lDate} value={l.date} onCommit={e.letter('date')} placeholder="日期" />
           </div>
         </div>

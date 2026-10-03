@@ -6,6 +6,7 @@ import { newId } from '../../storage/assets';
 import { activeDecor, getTheme } from '../../themes';
 import { Dot, QuietButton } from '../ui/QuietButton';
 import { useEdit } from './EditContext';
+import { SignaturePad } from '../Signature/Signature';
 import { ChapterTray } from './ChapterTray';
 import { LayoutIcon } from './LayoutIcon';
 import { VoiceTray } from './VoiceTray';
@@ -24,6 +25,7 @@ const LAYOUTS = Object.keys(LAYOUT_LABELS) as SpreadLayout[];
 export function PageOptions({ doc, view, update, onRemoveSpread }: Props) {
   const edit = useEdit();
   const [tray, setTray] = useState<null | 'stickers' | 'chapter' | 'voice'>(null);
+  const [signing, setSigning] = useState(false);
   const theme = getTheme(doc.themeId);
   if (!view) return null;
 
@@ -179,6 +181,24 @@ export function PageOptions({ doc, view, update, onRemoveSpread }: Props) {
       <QuietButton active={!!doc.meta.letter} onClick={() => toggle('letter', !doc.meta.letter)}>
         结尾的信
       </QuietButton>
+      {view.kind === 'letter' && doc.meta.letter && (
+        <QuietButton active={!!doc.meta.letter.signature} onClick={() => setSigning(true)}>
+          {doc.meta.letter.signature ? '改签名' : '手写签名'}
+        </QuietButton>
+      )}
+      {signing && doc.meta.letter && (
+        <SignaturePad
+          initial={doc.meta.letter.signature}
+          onClose={() => setSigning(false)}
+          onSave={(sig) =>
+            update((d) => {
+              if (!d.meta.letter) return;
+              if (sig) d.meta.letter.signature = sig;
+              else delete d.meta.letter.signature;
+            })
+          }
+        />
+      )}
       <span className={s.note}>点书上的文字即可直接修改</span>
     </div>
   );

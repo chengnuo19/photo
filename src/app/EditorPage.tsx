@@ -515,6 +515,11 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
                     <QuietLink href={href.record(doc.id, 'image')} onClick={() => void putBook(docRef.current)}>
                       长图（.jpg）
                     </QuietLink>
+                    <p className={styles.menuNote}>打印</p>
+                    <QuietLink href={href.record(doc.id, 'pdf')} onClick={() => void putBook(docRef.current)}>
+                      打印 / PDF
+                    </QuietLink>
+                    <p className={styles.menuNote}>A4 家用打印，或交给印刷厂做成一本真正的书</p>
                     <p className={styles.menuNote}>微信里打不开网页文件：录一段自动翻页的视频，或拼一张长图直接发送（需电脑版 Chrome / Edge）</p>
                     <p className={styles.menuNote}>给自己</p>
                     <QuietButton onClick={() => void runBackup()}>备份这本书（.mbook）</QuietButton>

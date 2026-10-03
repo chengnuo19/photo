@@ -6,6 +6,7 @@ import { seeded } from '../context';
 import type { DecorProps, PageProps, ThemeDef } from '../types';
 import { BeadString, Bloom, Burst, FlightDoodle, Plane, Sparkle, Star, TornEdge } from './Ornaments';
 import s from './storybook.module.css';
+import { SignatureMark } from '../../components/Signature/Signature';
 
 /* ------------------------------------------------------------------ covers */
 
@@ -211,6 +212,7 @@ function Letter({ book }: PageProps) {
         )}
         <div className={s.letterSign}>
           <EditableText value={l.signoff} onCommit={e.letter('signoff')} placeholder="署名" />
+          <SignatureMark signature={l.signature} />
           <EditableText className={s.letterDate} value={l.date} onCommit={e.letter('date')} placeholder="日期" />
         </div>
       </div>

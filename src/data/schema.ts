@@ -134,11 +134,19 @@ export interface Dedication {
   body: string;
 }
 
+/** A handwritten signature: one SVG path in a w × h box (drawn in the page's ink). */
+export interface Signature {
+  d: string;
+  w: number;
+  h: number;
+}
+
 export interface Letter {
   salutation?: string;
   body: string;
   signoff?: string;
   date?: string;
+  signature?: Signature;
 }
 
 export interface BookMeta {

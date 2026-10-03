@@ -21,6 +21,7 @@ import {
   Waffle,
 } from './ornaments';
 import s from './stranger.module.css';
+import { SignatureMark } from '../../components/Signature/Signature';
 
 const art = (f: string) => `${import.meta.env.BASE_URL}assets/themes/stranger/${f}.svg`;
 const LETTERS = ['ABCDEFG', 'HIJKLMN', 'OPQRST', 'UVWXYZ'];
@@ -163,6 +164,7 @@ function Letter({ book }: PageProps) {
         <EditableText className={s.nbBody} value={l.body} onCommit={e.letter('body')} placeholder="信的内容" multiline />
         <div className={s.nbSign}>
           <EditableText value={l.signoff} onCommit={e.letter('signoff')} placeholder="署名" />
+          <SignatureMark signature={l.signature} />
           <EditableText value={l.date} onCommit={e.letter('date')} placeholder="日期" />
         </div>
       </Notebook>

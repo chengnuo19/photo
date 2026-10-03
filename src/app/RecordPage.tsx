@@ -24,6 +24,7 @@ import { download } from '../export/exportBook';
 import { FilmCancelled, filmSeconds, makeFilm, makeLongImage } from '../export/film/film';
 import { PagePress, type PressHandle } from '../export/film/press';
 import { geometryFor, type FilmFormat } from '../export/film/renderer';
+import { makePdf, printSize, type PdfKind } from '../export/pdf/makePdf';
 import { fontSample, useFontsReady } from '../hooks/useFontsReady';
 import { isSampleId, useLoadedBook } from '../hooks/useLoadedBook';
 import { fmtBytes } from '../storage/quota';
@@ -35,7 +36,7 @@ import styles from './RecordPage.module.css';
 /** How long each open spread stays on screen in the video. */
 const DWELL_MS = 2600;
 
-/** Turn a book into a flip-through video or one long picture, for chat apps. */
+/** Turn a book into a flip-through video or one long picture (for chat apps), or a PDF to print. */
 export function RecordPage({ id, mode }: { id: string; mode: RecordMode }) {
   const { resolved, status } = useLoadedBook(id);
   const back = isSampleId(id) ? href.read(id) : href.edit(id);
@@ -79,7 +80,10 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
   const unwrapped = useRef<() => void>(() => undefined);
   const support = captureSupport();
   const video = mode === 'video';
-  const [method, setMethod] = useState<Method>(support.ok ? 'capture' : 'draw');
+  const pdf = mode === 'pdf';
+  const [method, setMethod] = useState<Method>(support.ok && !pdf ? 'capture' : 'draw');
+  const [pdfKind, setPdfKind] = useState<PdfKind>('home');
+  const [heightCm, setHeightCm] = useState(21);
   const [format, setFormat] = useState<FilmFormat>(() => (window.innerWidth < window.innerHeight ? 'portrait' : 'landscape'));
   // the long picture is always made of open spreads
   const pressFormat: FilmFormat = video ? format : 'landscape';
@@ -121,6 +125,13 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
         text = film.mp4
           ? `视频做好了（${fmtBytes(film.blob.size)}${film.audio ? '' : '，没有声音'}）。`
           : `视频做好了，是 .webm 格式（${fmtBytes(film.blob.size)}）。微信可能不能直接播放，可以先用剪映等工具转成 MP4。`;
+      } else if (pdf) {
+        const made = await makePdf(common, { kind: pdfKind, heightCm });
+        file = { blob: made.blob, filename: `${safe(book.meta.title)}-${made.ext === 'zip' ? '印刷文件.zip' : '打印.pdf'}` };
+        text =
+          made.ext === 'zip'
+            ? `印刷文件做好了（${made.pages} 页，${fmtBytes(made.blob.size)}）：内页和封面各一个 PDF，附印刷说明，可以直接交给印刷厂。`
+            : `PDF 做好了（${made.pages} 页，${fmtBytes(made.blob.size)}），A4 横向，可以直接打印或发给别人。`;
       } else {
         const blob = await makeLongImage(common, `《${book.meta.title || '无题'}》 · 回忆绘本`);
         file = { blob, filename: `${safe(book.meta.title)}-长图.jpg` };
@@ -266,7 +277,7 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
       ) : (
         <div className={styles.scrim}>
           <section className={styles.panel} role="dialog" aria-labelledby="rec-title">
-            <h1 id="rec-title">{video ? '翻书视频' : '长图'}</h1>
+            <h1 id="rec-title">{video ? '翻书视频' : pdf ? '打印 / PDF' : '长图'}</h1>
             {stage.name === 'intro' && method === 'capture' && support.ok && (
               <>
                 <p>
@@ -296,8 +307,38 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
                 <p>
                   {video
                     ? `自动翻完整本书，直接生成 MP4 视频${music.available || book.sound.flip ? '（带音乐和翻页声）' : ''}，大约 ${drawnSeconds} 秒。不用共享屏幕，手机上也能做。`
-                    : '把封面和每一页拼成一张长图，适合发微信和朋友圈。不用共享屏幕，手机上也能做。'}
+                    : pdf
+                      ? '把整本书排成 PDF：可以在家打印，也可以交给印刷厂做成一本真正的书。'
+                      : '把封面和每一页拼成一张长图，适合发微信和朋友圈。不用共享屏幕，手机上也能做。'}
                 </p>
+                {pdf && (
+                  <>
+                    <div className={styles.formats} role="radiogroup" aria-label="用途">
+                      <QuietButton role="radio" aria-checked={pdfKind === 'home'} active={pdfKind === 'home'} onClick={() => setPdfKind('home')}>
+                        家用打印
+                        <small>A4 横向，一个跨页一张纸</small>
+                      </QuietButton>
+                      <QuietButton role="radio" aria-checked={pdfKind === 'print'} active={pdfKind === 'print'} onClick={() => setPdfKind('print')}>
+                        交给印刷厂
+                        <small>单页 300 dpi，含 3 mm 出血</small>
+                      </QuietButton>
+                    </div>
+                    {pdfKind === 'print' && (
+                      <div className={styles.formats} role="radiogroup" aria-label="成品尺寸">
+                        {[20, 21, 25].map((cm) => {
+                          const size = printSize(geo.W / geo.H, cm);
+                          return (
+                            <QuietButton key={cm} role="radio" aria-checked={heightCm === cm} active={heightCm === cm} onClick={() => setHeightCm(cm)}>
+                              {size.w} × {size.h} cm
+                              <small>{cm === 21 ? '常见画册' : cm === 20 ? '小一点' : '大开本'}</small>
+                            </QuietButton>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {pdfKind === 'print' && <p className={styles.aside}>印刷精度的文件比较大，手机上生成会慢一些。</p>}
+                  </>
+                )}
                 {video && (
                   <div className={styles.formats} role="radiogroup" aria-label="画面方向">
                     <QuietButton role="radio" aria-checked={format === 'portrait'} active={format === 'portrait'} onClick={() => setFormat('portrait')}>
@@ -317,10 +358,12 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
                   </QuietButton>
                   <QuietLink href={backHref}>返回</QuietLink>
                 </p>
-                <p className={styles.aside}>
-                  画面由每一页的图片重新绘制，个别动态效果会和书里不一样。
-                  {support.ok && <QuietButton onClick={() => setMethod('capture')}>改用录屏</QuietButton>}
-                </p>
+                {!pdf && (
+                  <p className={styles.aside}>
+                    画面由每一页的图片重新绘制，个别动态效果会和书里不一样。
+                    {support.ok && <QuietButton onClick={() => setMethod('capture')}>改用录屏</QuietButton>}
+                  </p>
+                )}
               </>
             )}
             {stage.name === 'running' && (
@@ -388,11 +431,9 @@ function Preview({ file }: { file: { blob: Blob; filename: string } }) {
     return () => URL.revokeObjectURL(u);
   }, [file]);
   if (!url) return null;
-  return file.blob.type.startsWith('video/') ? (
-    <video className={styles.preview} src={url} controls playsInline preload="metadata" />
-  ) : (
-    <img className={styles.preview} src={url} alt="长图预览" />
-  );
+  if (file.blob.type.startsWith('video/')) return <video className={styles.preview} src={url} controls playsInline preload="metadata" />;
+  if (file.blob.type.startsWith('image/')) return <img className={styles.preview} src={url} alt="长图预览" />;
+  return null;
 }
 
 /** Save: the phone's share sheet (存储视频, 发给微信好友…) where there is one, and a plain download. */

@@ -7,6 +7,7 @@ import type { PageProps } from '../types';
 import { Photo } from './Photo';
 import { SpreadLayer } from './SpreadLayer';
 import s from './kit.module.css';
+import { SignatureMark } from '../../components/Signature/Signature';
 
 /*
  * Generic pages every theme gets for free. Look comes from CSS variables
@@ -117,6 +118,7 @@ export function KitLetter({ book }: PageProps) {
         )}
         <div className={s.letterSign}>
           <EditableText value={l.signoff} onCommit={e.letter('signoff')} placeholder="署名" />
+          <SignatureMark signature={l.signature} />
           <EditableText className={s.letterDate} value={l.date} onCommit={e.letter('date')} placeholder="日期" />
         </div>
       </div>

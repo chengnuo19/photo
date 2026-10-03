@@ -8,6 +8,7 @@ import { lineSlots, useBookEdits } from '../shared';
 import type { DecorProps, FrameProps, PageProps, ThemeDef } from '../types';
 import { Candelabra, Cello, Crest, Crow, DeadRose, Drips, RainWindow, Skull, Spider, Typewriter, Umbrella, WebCorner } from './ornaments';
 import s from './wednesday.module.css';
+import { SignatureMark } from '../../components/Signature/Signature';
 
 const art = (f: string) => `${import.meta.env.BASE_URL}assets/themes/wednesday/${f}.svg`;
 
@@ -113,6 +114,7 @@ function Letter({ book }: PageProps) {
         <EditableText className={s.lBody} value={l.body} onCommit={e.letter('body')} placeholder="信的内容" multiline />
         <div className={s.lSign}>
           <EditableText value={l.signoff} onCommit={e.letter('signoff')} placeholder="署名" />
+          <SignatureMark signature={l.signature} />
           <EditableText className={s.lDate} value={l.date} onCommit={e.letter('date')} placeholder="日期" />
         </div>
         <span className={s.seal} aria-hidden>

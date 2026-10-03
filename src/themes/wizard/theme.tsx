@@ -7,6 +7,7 @@ import k from '../kit/kit.module.css';
 import { lineSlots, stampDate, useBookEdits } from '../shared';
 import type { DecorProps, FrameProps, PageProps, ThemeDef } from '../types';
 import s from './wizard.module.css';
+import { SignatureMark } from '../../components/Signature/Signature';
 
 const art = (f: string) => `${import.meta.env.BASE_URL}assets/themes/wizard/${f}.svg`;
 type P = { className?: string; style?: CSSProperties };
@@ -249,6 +250,7 @@ function Letter({ book }: PageProps) {
         <EditableText className={s.lBody} value={l.body} onCommit={e.letter('body')} placeholder="信的内容" multiline />
         <div className={s.lSign}>
           <EditableText value={l.signoff} onCommit={e.letter('signoff')} placeholder="署名" />
+          <SignatureMark signature={l.signature} />
           <EditableText className={s.lDate} value={l.date} onCommit={e.letter('date')} placeholder="日期" />
         </div>
       </div>

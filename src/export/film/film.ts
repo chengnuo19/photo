@@ -95,7 +95,7 @@ async function waitImages(el: HTMLElement) {
   await Promise.all(imgs.map((im) => (im.complete ? Promise.resolve() : im.decode().catch(() => undefined))));
 }
 
-type Snap = (el: HTMLElement, scale: number) => Promise<HTMLCanvasElement>;
+export type Snap = (el: HTMLElement, scale: number) => Promise<HTMLCanvasElement>;
 
 /**
  * The paper grain, fibres and watercolour masks are inline SVGs whose filters are referenced
@@ -116,7 +116,8 @@ function keepInlineSvgs(node: Node) {
   }
 }
 
-async function snapper(book: BookDoc, text: string): Promise<Snap> {
+/** Pictures of elements of the off-screen press, with the book's fonts embedded. */
+export async function snapper(book: BookDoc, text: string): Promise<Snap> {
   const [{ domToCanvas }, cssText] = await Promise.all([import('modern-screenshot'), fontCss(book, text)]);
   return async (el, scale) => {
     await waitImages(el);
