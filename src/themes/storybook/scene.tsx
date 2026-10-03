@@ -1,6 +1,7 @@
 import { Backdrop, Egg, Prop, grain, woodGrain } from '../../components/Scene/Scene';
 import { bell, noiseBurst, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { storybookMusic } from './music';
 
 /**
  * A pale birch table by a window: soft window-pane light with leaf shadows drifting,
@@ -50,6 +51,7 @@ export function StorybookScene() {
 }
 
 export const storybookSound = {
+  music: storybookMusic,
   egg: {
     tea: ((v) => {
       bell(v, { f: 2350, peak: 0.05, d: 0.9 });

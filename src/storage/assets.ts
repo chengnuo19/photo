@@ -24,6 +24,11 @@ export function resolveBook(doc: BookDoc): BookDoc {
   return mapSrcs(doc, (src) => (isAssetRef(src) ? urls.get(assetId(src)) ?? '' : src));
 }
 
+/** One source as something the browser can load (an `asset:` ref becomes its object URL). */
+export function assetUrl(src: string) {
+  return isAssetRef(src) ? urls.get(assetId(src)) ?? '' : src;
+}
+
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
 export interface ImportedImage {

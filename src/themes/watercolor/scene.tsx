@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Backdrop, Egg, Prop, grain, mottle } from '../../components/Scene/Scene';
 import { noiseBurst, tone, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { watercolorMusic } from './music';
 
 const BLOOMS = ['#f2a0b8', '#8fc3d9', '#b7d38f', '#f5c86a', '#c3a6e0'];
 
@@ -55,6 +56,7 @@ export function WatercolorScene() {
 }
 
 export const watercolorSound = {
+  music: watercolorMusic,
   egg: {
     // a drop into water: a quick falling pitch plus a wet splash
     drop: ((v) => {

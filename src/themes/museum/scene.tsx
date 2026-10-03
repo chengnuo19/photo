@@ -1,6 +1,7 @@
 import { Backdrop, Egg, Prop, grain, mottle } from '../../components/Scene/Scene';
 import { bell, noiseBurst, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { museumMusic } from './music';
 
 /**
  * A pale stone reading table under a gallery spotlight: a ticket stub, a pencil
@@ -36,6 +37,7 @@ export function MuseumScene() {
 }
 
 export const museumSound = {
+  music: museumMusic,
   // a hushed gallery: pages barely whisper
   page: ((v) => noiseBurst(v, { f: 3200, f2: 1400, q: 0.6, e: { a: 0.06, d: 0.5, peak: 0.08 } })) as Recipe,
   egg: {

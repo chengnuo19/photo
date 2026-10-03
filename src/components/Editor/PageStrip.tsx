@@ -35,9 +35,12 @@ export function PageStrip({ doc, resolved, built, current, onJump, onMove, onAdd
   const storyIndex = (vi: number) => vi - (firstStory < 0 ? 0 : firstStory);
   const insertAt = firstStory < 0 ? views.findIndex((v) => v.kind === 'letter' || v.kind === 'finis') : -1;
 
+  let chapterNo = 0;
   const tiles = views.map((v, vi) => {
     const isStory = v.kind === 'story';
     const sp = isStory ? resolved.spreads.find((x) => x.id === v.spread!.id) : undefined;
+    const chapter = sp?.chapter ? (sp.chapter.title?.trim() || `第 ${++chapterNo} 章`) : null;
+    if (sp?.chapter?.title?.trim()) chapterNo++;
     const img = sp?.images[0];
     const single = v.kind === 'cover' || v.kind === 'back';
     return (
@@ -47,6 +50,7 @@ export function PageStrip({ doc, resolved, built, current, onJump, onMove, onAdd
         data-current={vi === current || undefined}
         data-single={single || undefined}
         data-drop={(isStory && dropAt === storyIndex(vi)) || undefined}
+        data-chapter={chapter ? true : undefined}
         draggable={isStory}
         onDragStart={(e) => {
           drag.current = storyIndex(vi);
@@ -69,13 +73,28 @@ export function PageStrip({ doc, resolved, built, current, onJump, onMove, onAdd
           setDropAt(null);
         }}
       >
-        <button type="button" onClick={() => onJump(vi)} aria-label={isStory ? `第 ${storyIndex(vi) + 1} 页` : LABEL[v.kind]} aria-current={vi === current || undefined}>
+        {chapter && (
+          <span className={s.chapter} title={chapter}>
+            {chapter}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() => onJump(vi)}
+          aria-label={isStory ? `第 ${storyIndex(vi) + 1} 页${chapter ? `（${chapter}开始）` : ''}${sp?.voice ? '，有语音留言' : ''}` : LABEL[v.kind]}
+          aria-current={vi === current || undefined}
+        >
           {img?.src ? (
             <img src={img.thumb ?? img.src} alt="" draggable={false} style={{ objectPosition: `${(img.focal?.x ?? 0.5) * 100}% ${(img.focal?.y ?? 0.5) * 100}%` }} />
           ) : (
             <span className={s.label}>{isStory ? '空白' : LABEL[v.kind]}</span>
           )}
           {!single && <i className={s.gutter} aria-hidden />}
+          {sp?.voice && (
+            <i className={s.voice} aria-hidden>
+              ♪
+            </i>
+          )}
         </button>
       </li>
     );
@@ -95,7 +114,9 @@ export function PageStrip({ doc, resolved, built, current, onJump, onMove, onAdd
 
   return (
     <nav className={s.strip} aria-label="页面">
-      <ol className={s.row}>{tiles}</ol>
+      <ol className={s.row} data-chapters={doc.spreads.some((x) => x.chapter) || undefined}>
+        {tiles}
+      </ol>
       <p className={s.hint}>
         {doc.spreads.length ? '拖动小图可以调整顺序' : '把照片拖进窗口，或点 + 添加'}
       </p>

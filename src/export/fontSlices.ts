@@ -8,7 +8,10 @@ import { fontsOf } from '../themes';
  */
 
 /** Text the reader itself shows (so its glyphs get included). */
-const UI_TEXT = '回忆绘本轻点封面，打开这本书再读一遍— 完 —音乐静音暂停播放书已合上。按右方向键或点击封面打开这张图片没能加载出来©·/ ';
+const UI_TEXT =
+  '回忆绘本轻点封面，打开这本书再读一遍— 完 —音乐静音暂停播放书已合上。按右方向键或点击封面打开这张图片没能加载出来©·/ ' +
+  '这本书配了一首歌《》在网易云音乐QQ酷狗酷我AppleSpotify里播放复制链接已复制收起听一段留言重放停止语音♪' +
+  '0123456789天:后可以拆开年月日先回答一个问题写下答案打开再想想～提示：自动放映暂停继续慢中快全屏退出▶❚';
 const ASCII = Array.from({ length: 95 }, (_, i) => String.fromCharCode(32 + i)).join('');
 
 /** @font-face rules (with their slice URLs) for the fonts `doc` uses and the characters it shows, plus `extraText`. */
@@ -25,7 +28,10 @@ function bookText(doc: BookDoc): string[] {
     ...m.coverLines, ...m.closingLines,
     m.dedication?.to, m.dedication?.body,
     m.letter?.salutation, m.letter?.body, m.letter?.signoff, m.letter?.date,
-    ...doc.spreads.flatMap((s) => [s.caption, s.title, s.text, s.stamp?.date, s.stamp?.place]),
+    ...doc.spreads.flatMap((s) => [s.caption, s.title, s.text, s.stamp?.date, s.stamp?.place, s.chapter?.title]),
+    doc.music?.kind === 'link' ? doc.music.title : undefined,
+    doc.gift?.quiz?.question,
+    doc.gift?.quiz?.hint,
   ];
   return [...parts.filter(Boolean).join('')];
 }

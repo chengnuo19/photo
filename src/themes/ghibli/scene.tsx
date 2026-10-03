@@ -1,6 +1,7 @@
 import { Backdrop, Egg, Prop, grain } from '../../components/Scene/Scene';
 import { bell, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { ghibliMusic } from './music';
 
 /**
  * A summer veranda: pale wooden boards, big clouds drifting past (their shadows on the
@@ -37,6 +38,7 @@ export function GhibliScene() {
 }
 
 export const ghibliSound = {
+  music: ghibliMusic,
   egg: {
     chime: ((v) => {
       [2637, 3136, 2794, 3520].forEach((f, i) => bell(v, { f, peak: 0.045, d: 2.2, at: v.t + i * 0.28 + Math.random() * 0.06, partials: [1, 2.4, 4.1] }));

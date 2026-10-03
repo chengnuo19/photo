@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import type { BookDoc } from '../data/schema';
+import { migrateDoc } from '../data/migrate';
+import type { BookDoc, ChapterMusic, MusicChoice } from '../data/schema';
 
 export interface StoredAsset {
   id: string;
@@ -42,12 +43,19 @@ export function db() {
 
 export async function listBooks(): Promise<StoredBook[]> {
   const all = await (await db()).getAllFromIndex('books', 'updatedAt');
-  return all.reverse();
+  return all.reverse().map(upgrade);
 }
 
 export async function getBook(id: string) {
-  return (await db()).get('books', id);
+  const b = await (await db()).get('books', id);
+  return b && upgrade(b);
 }
+
+/** Older books are upgraded as they are read (and saved upgraded on the next edit). */
+const upgrade = (b: StoredBook): StoredBook => {
+  const doc = migrateDoc(b.doc);
+  return doc === b.doc ? b : { ...b, doc };
+};
 
 export async function putBook(doc: BookDoc) {
   const d = await db();
@@ -105,7 +113,19 @@ export function forEachSrc(doc: BookDoc, fn: (src: string) => void) {
     img(s.snapshot);
     s.stickers?.forEach((st) => !st.src.startsWith('theme:') && fn(st.src));
   }
-  if (doc.music) fn(doc.music.src);
+  musicSrc(doc.music, fn);
+  for (const s of doc.spreads) {
+    musicSrc(s.chapter?.music, fn);
+    if (s.voice) fn(s.voice.src);
+  }
+}
+
+function musicSrc(m: MusicChoice | undefined, fn: (src: string) => void) {
+  if (m?.kind === 'file') fn(m.src);
+}
+
+function mapMusic<T extends MusicChoice | ChapterMusic | undefined>(m: T, map: (src: string) => string): T {
+  return (m?.kind === 'file' ? { ...m, src: map(m.src) } : m) as T;
 }
 
 /** Return a copy of the book with every source passed through `map`. */
@@ -120,7 +140,9 @@ export function mapSrcs(doc: BookDoc, map: (src: string) => string): BookDoc {
       images: s.images.map(img),
       snapshot: img(s.snapshot),
       stickers: s.stickers?.map((st) => (st.src.startsWith('theme:') ? st : { ...st, src: map(st.src) })),
+      ...(s.chapter ? { chapter: { ...s.chapter, music: mapMusic(s.chapter.music, map) } } : {}),
+      ...(s.voice ? { voice: { ...s.voice, src: map(s.voice.src) } } : {}),
     })),
-    music: doc.music ? { ...doc.music, src: map(doc.music.src) } : undefined,
+    music: mapMusic(doc.music, map),
   };
 }

@@ -7,10 +7,12 @@ import { createRoot } from 'react-dom/client';
 import './styles/global.css';
 import { ReadingRoom } from './app/ReadingRoom';
 import type { BookDoc } from './data/schema';
+import { migrateDoc } from './data/migrate';
 import { loadBookThemes } from './themes';
 
 const raw = document.getElementById('book-data')?.textContent ?? 'null';
-const book = JSON.parse(raw) as BookDoc | null;
+const parsed = JSON.parse(raw) as BookDoc | null;
+const book = parsed && migrateDoc(parsed);
 const root = createRoot(document.getElementById('root')!);
 
 if (book) {

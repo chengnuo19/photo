@@ -5,7 +5,7 @@ import type { BookDoc, BookImage, Spread, SpreadLayout, ThemeId } from './schema
 export function createBook(themeId: ThemeId = 'storybook'): BookDoc {
   return {
     id: newId(),
-    version: 1,
+    version: 2,
     themeId,
     meta: {
       kicker: '一段想留住的时光',

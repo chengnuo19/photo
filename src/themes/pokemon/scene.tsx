@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Backdrop, Egg, Prop, grain } from '../../components/Scene/Scene';
 import { tone, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { pokemonMusic } from './music';
 
 /**
  * A picnic blanket on the grass at the edge of Route 1: tufts of tall grass rustling,
@@ -59,6 +60,7 @@ export function PokemonScene() {
 const sq = (f: number, at: number, d = 0.07, peak = 0.05): Recipe => (v) => tone(v, { f, type: 'square', lp: 3500, at: v.t + at, e: { a: 0.002, d, peak } });
 
 export const pokemonSound = {
+  music: pokemonMusic,
   // the menu blip
   page: ((v) => {
     sq(1320, 0, 0.04, 0.04)(v);

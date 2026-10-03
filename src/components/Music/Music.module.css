@@ -73,3 +73,99 @@
     bottom: 10px;
   }
 }
+
+/* A song on a music platform */
+.link {
+  position: fixed;
+  left: max(24px, 2.2vw);
+  bottom: max(16px, 2.2vh);
+  z-index: 20;
+  max-width: min(340px, calc(100vw - 140px));
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--room, #fbfaf7) 84%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 22px rgb(0 0 0 / 0.14);
+  color: var(--room-strong);
+  font-family: var(--font-cn);
+  font-size: 13px;
+  line-height: 1.5;
+  animation: rise 600ms ease both;
+}
+
+.linkLine {
+  margin: 0 0 6px;
+}
+
+.linkLine b {
+  font-weight: 600;
+}
+
+.linkActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.linkActions a,
+.linkActions button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.85;
+}
+
+.linkActions a {
+  font-weight: 600;
+  opacity: 1;
+}
+
+.linkActions button:last-child {
+  margin-left: auto;
+  text-decoration: none;
+  font-size: 16px;
+  line-height: 1;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (max-width: 719px) {
+  .link {
+    left: 12px;
+    bottom: 40px;
+    max-width: calc(100vw - 24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    animation: none;
+  }
+}
+
+/* replay a page's voice note (sits above the music toggle) */
+.voiceBtn {
+  bottom: calc(max(16px, 2.2vh) + 30px);
+  font-size: 11px;
+}
+
+.voiceBtn > span:first-child {
+  font-size: 9px;
+}
+
+@media (max-width: 719px) {
+  .voiceBtn {
+    bottom: 40px;
+  }
+}

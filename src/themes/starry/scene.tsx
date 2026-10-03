@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Backdrop, Egg, Prop, grain } from '../../components/Scene/Scene';
 import { bell, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { starryMusic } from './music';
 
 /**
  * An astronomer's desk: a faint celestial chart across the table with twinkling points,
@@ -56,6 +57,7 @@ export function StarryScene() {
 }
 
 export const starrySound = {
+  music: starryMusic,
   page: ((v) => bell(v, { f: 2093, peak: 0.018, d: 1.2 })) as Recipe,
   egg: {
     constellation: ((v) => {

@@ -1,6 +1,7 @@
 import { Backdrop, Egg, Prop, grain, tile } from '../../components/Scene/Scene';
 import { noiseBurst, tone, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { journalMusic } from './music';
 
 const MAP = tile(
   `<svg xmlns='http://www.w3.org/2000/svg' width='900' height='700' viewBox='0 0 900 700'><g fill='none' stroke='#846a48' stroke-width='1.1' opacity='0.5'>` +
@@ -47,6 +48,7 @@ export function JournalScene() {
 }
 
 export const journalSound = {
+  music: journalMusic,
   egg: {
     compass: ((v) => {
       for (let i = 0; i < 6; i++) tone(v, { f: 3200 - i * 120, type: 'triangle', e: { a: 0.001, d: 0.03, peak: 0.04 / (1 + i * 0.3) }, at: v.t + i * 0.12 + (i > 3 ? i * 0.06 : 0) });

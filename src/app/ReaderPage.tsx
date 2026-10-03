@@ -16,6 +16,7 @@ export function ReaderPage({ id }: { id: string }) {
       editHref={href.edit(id)}
       unwrap={resolved.gift?.unwrap !== false && !wasUnwrapped(id)}
       onUnwrapped={() => markUnwrapped(id)}
+      preview
     />
   );
 }

@@ -66,7 +66,10 @@ const phoneLike = () => window.matchMedia('(pointer: coarse)').matches && !windo
 function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; backHref: string }) {
   const theme = getTheme(book.themeId);
   const ready = useFontsReady(fontSample(book), fontsOf(book), book.themeId);
-  const music = useBookMusic(book.music?.src);
+  const music = useBookMusic(book, theme);
+  // the screen recording waits for a page's voice note to finish before turning on
+  const speaking = useRef(false);
+  speaking.current = music.voicePlaying;
   const roomRef = useRef<HTMLElement>(null);
   const bookRef = useRef<BookHandle>(null);
   const [stage, setStage] = useState<Stage>({ name: 'intro' });
@@ -168,6 +171,7 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
           await until(() => atRest() && phase() !== 'closed', 6000);
           if (phase() === 'ended') break;
           await wait(DWELL_MS);
+          await until(() => !speaking.current, 70000);
           bookRef.current?.next();
         }
         await wait(2200);
@@ -247,7 +251,7 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
         />
       )}
       <div className={app.table} data-sealed={sealed || undefined}>
-        <Book book={book} onOpen={music.start} handle={bookRef} recording />
+        <Book book={book} onOpen={music.start} onView={music.onView} onTurn={music.onTurn} handle={bookRef} recording />
       </div>
       {music.available && !running && <MusicToggle playing={music.playing} onToggle={music.toggle} />}
       {pressing && (
@@ -291,7 +295,7 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
               <>
                 <p>
                   {video
-                    ? `自动翻完整本书，直接生成 MP4 视频${book.music?.src || book.sound.flip ? '（带音乐和翻页声）' : ''}，大约 ${drawnSeconds} 秒。不用共享屏幕，手机上也能做。`
+                    ? `自动翻完整本书，直接生成 MP4 视频${music.available || book.sound.flip ? '（带音乐和翻页声）' : ''}，大约 ${drawnSeconds} 秒。不用共享屏幕，手机上也能做。`
                     : '把封面和每一页拼成一张长图，适合发微信和朋友圈。不用共享屏幕，手机上也能做。'}
                 </p>
                 {video && (

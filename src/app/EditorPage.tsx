@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Book, type BookHandle } from '../components/Book/Book';
 import { EditContext, type EditApi } from '../components/Editor/EditContext';
 import { PageOptions } from '../components/Editor/PageOptions';
+import { GiftSettings } from '../components/Editor/GiftSettings';
+import { MusicPicker } from '../components/Editor/MusicPicker';
 import { PageStrip } from '../components/Editor/PageStrip';
 import { Scene } from '../components/Scene/Scene';
 import { Masthead } from '../components/Masthead/Masthead';
@@ -174,6 +176,34 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
     [flash],
   );
 
+  // ---- music and voice
+  const pickSong = useCallback(async () => {
+    const [f] = await openPicker('audio/*', false);
+    if (!f) return null;
+    try {
+      const src = await importAudio(f);
+      setAssetsTick((t) => t + 1);
+      return { src, title: f.name.replace(/\.[^.]+$/, '') };
+    } catch (err) {
+      flash(explainStorageError(err), 'warn');
+      return null;
+    }
+  }, [flash]);
+
+  const storeAudio = useCallback(
+    async (f: File) => {
+      try {
+        const src = await importAudio(f);
+        setAssetsTick((t) => t + 1);
+        return src;
+      } catch (err) {
+        flash(explainStorageError(err), 'warn');
+        return null;
+      }
+    },
+    [flash],
+  );
+
   const api: EditApi = useMemo(
     () => ({
       update,
@@ -182,8 +212,10 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
         const [f] = await openPicker(IMAGE_ACCEPT, false);
         return f ? importFile(f) : null;
       },
+      pickSong,
+      storeAudio,
     }),
-    [update, importFile],
+    [update, importFile, pickSong, storeAudio],
   );
 
   // ---- view tracking + navigation
@@ -261,21 +293,6 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [undo, redo]);
-
-  // ---- music
-  const setMusic = async () => {
-    const [f] = await openPicker('audio/*', false);
-    if (!f) return;
-    let src: string;
-    try {
-      src = await importAudio(f);
-    } catch (err) {
-      flash(explainStorageError(err), 'warn');
-      return;
-    }
-    setAssetsTick((t) => t + 1);
-    update((d) => void (d.music = { src, title: f.name.replace(/\.[^.]+$/, '') }));
-  };
 
   // ---- export
   const [menu, setMenu] = useState<null | 'export' | 'music' | 'style'>(null);
@@ -435,16 +452,23 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
               </span>
               <Dot />
               <span className={styles.menuWrap}>
-                <QuietButton active={!!doc.music} onClick={() => setMenu(menu === 'music' ? null : 'music')} aria-expanded={menu === 'music'}>
+                <QuietButton active={doc.music?.kind !== 'none'} onClick={() => setMenu(menu === 'music' ? null : 'music')} aria-expanded={menu === 'music'}>
                   音乐
                 </QuietButton>
                 {menu === 'music' && (
-                  <div className={styles.menu} role="menu">
-                    <p className={styles.menuNote}>{doc.music ? `当前：${doc.music.title ?? '背景音乐'}` : '读者翻开书时，音乐会轻轻响起'}</p>
-                    <QuietButton onClick={() => void setMusic().then(() => setMenu(null))}>{doc.music ? '更换音乐' : '选择一首音乐'}</QuietButton>
-                    {doc.music && (
-                      <QuietButton onClick={() => (update((d) => void delete d.music), setMenu(null))}>移除音乐</QuietButton>
-                    )}
+                  <div className={`${styles.menu} ${styles.musicMenu}`}>
+                    <p className={styles.menuNote}>读者翻开书时，音乐会轻轻响起。想按章节换音乐：翻到那一页，点下方的"章节"。</p>
+                    <MusicPicker
+                      value={doc.music}
+                      theme={getTheme(doc.themeId)}
+                      pickFile={pickSong}
+                      onChange={(m) =>
+                        update((d) => {
+                          if (m && m.kind !== 'theme') d.music = m;
+                          else delete d.music;
+                        })
+                      }
+                    />
                   </div>
                 )}
               </span>
@@ -462,43 +486,9 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
                   导出
                 </QuietButton>
                 {menu === 'export' && (
-                  <div className={styles.menu} role="menu">
+                  <div className={`${styles.menu} ${styles.musicMenu}`}>
                     <p className={styles.menuNote}>送礼</p>
-                    <QuietButton
-                      active={doc.gift?.unwrap !== false}
-                      onClick={() => update((d) => void (d.gift = { ...d.gift, unwrap: d.gift?.unwrap === false }))}
-                    >
-                      拆封仪式：{doc.gift?.unwrap === false ? '关' : '开'}
-                    </QuietButton>
-                    {doc.gift?.unwrap !== false && (
-                      <div className={styles.giftFields}>
-                        <label>
-                          送给
-                          <input
-                            value={doc.gift?.to ?? ''}
-                            placeholder={doc.meta.dedication?.to || '收礼的人'}
-                            maxLength={16}
-                            onChange={(e) => {
-                              const to = e.target.value;
-                              update((d) => void (d.gift = { ...d.gift, to }));
-                            }}
-                          />
-                        </label>
-                        <label>
-                          来自
-                          <input
-                            value={doc.gift?.from ?? ''}
-                            placeholder={doc.meta.author || '你的名字'}
-                            maxLength={16}
-                            onChange={(e) => {
-                              const from = e.target.value;
-                              update((d) => void (d.gift = { ...d.gift, from }));
-                            }}
-                          />
-                        </label>
-                      </div>
-                    )}
-                    <p className={styles.menuNote}>读者打开书之前，会先拆开一份{getTheme(doc.themeId).name}风格的包装</p>
+                    <GiftSettings doc={doc} update={update} themeName={getTheme(doc.themeId).name} />
                     <p className={styles.menuNote}>导出</p>
                     <div className={styles.segmented} role="radiogroup" aria-label="照片画质">
                       <QuietButton role="radio" aria-checked={quality === 'compact'} active={quality === 'compact'} onClick={() => pickQuality('compact')}>

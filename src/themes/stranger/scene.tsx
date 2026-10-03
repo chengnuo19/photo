@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Backdrop, Egg, Prop, grain } from '../../components/Scene/Scene';
 import { noiseBurst, tone, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { strangerMusic } from './music';
 
 const BULBS = ['#ff3b30', '#ffcc00', '#34c759', '#0a84ff', '#ff9500', '#ff2d92'];
 
@@ -54,6 +55,7 @@ export function StrangerScene() {
 }
 
 export const strangerSound = {
+  music: strangerMusic,
   // VHS deck: a clunky key press
   page: ((v) => {
     noiseBurst(v, { f: 1200, q: 2, e: { a: 0.001, d: 0.04, peak: 0.14 } });

@@ -1,6 +1,7 @@
 import { Backdrop, Egg, Prop, grain } from '../../components/Scene/Scene';
 import { noiseBurst, tone, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { filmMusic } from './music';
 
 /**
  * A darkroom desk: a glowing light table in one corner with negatives on it, a loupe,
@@ -39,6 +40,7 @@ export function FilmScene() {
 }
 
 export const filmSound = {
+  music: filmMusic,
   // a camera shutter for pages, a heavier clack for the covers
   page: ((v) => {
     noiseBurst(v, { f: 3200, q: 1.4, e: { a: 0.001, d: 0.035, peak: 0.16 } });

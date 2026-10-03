@@ -12,6 +12,10 @@ export interface EditApi {
   /** Open the file picker for one image. */
   pickImage: () => Promise<ImportedImage | null>;
   importFile: (file: File) => Promise<ImportedImage | null>;
+  /** Open the file picker for a song; resolves to its stored source and name. */
+  pickSong: () => Promise<{ src: string; title: string } | null>;
+  /** Store a recorded or picked sound (voice notes). */
+  storeAudio: (file: File) => Promise<string | null>;
 }
 
 export const EditContext = createContext<EditApi | null>(null);

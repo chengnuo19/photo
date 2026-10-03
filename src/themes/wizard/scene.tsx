@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Backdrop, Egg, Prop, grain, woodGrain } from '../../components/Scene/Scene';
 import { noiseBurst, tone, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { wizardMusic } from './music';
 
 /**
  * The long table in the Great Hall: dark oak, candles floating overhead (their light
@@ -51,6 +52,7 @@ export function WizardScene() {
 }
 
 export const wizardSound = {
+  music: wizardMusic,
   // the quill scratching a line as the page turns
   page: ((v) => {
     noiseBurst(v, { f: 5200, f2: 3000, q: 3, e: { a: 0.02, d: 0.22, peak: 0.05 } });

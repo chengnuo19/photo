@@ -179,8 +179,12 @@ function extOf(type: string, src: string) {
     'audio/ogg': 'ogg',
     'audio/wav': 'wav',
     'audio/x-wav': 'wav',
+    'audio/webm': 'weba',
+    'video/mp4': 'mp4',
+    'video/webm': 'webm',
+    'video/quicktime': 'mov',
   };
-  return byType[type] ?? src.split(/[?#]/)[0].split('.').pop()?.slice(0, 5) ?? 'bin';
+  return byType[type.split(';')[0]] ?? src.split(/[?#]/)[0].split('.').pop()?.slice(0, 5) ?? 'bin';
 }
 
 /** Re-encode a photo for the compact export (long edge 1400); keeps the original if that is not smaller. */

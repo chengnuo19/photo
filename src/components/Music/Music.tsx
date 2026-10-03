@@ -1,70 +1,79 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import type { BuiltBook } from '../../data/buildPages';
+import { PLATFORM_NAMES } from '../../data/musicLink';
+import type { BookDoc, MusicChoice } from '../../data/schema';
+import { BookAudio } from '../../sound/music';
+import { sectionAt, sectionsOf, spreadIndexOfView } from '../../sound/sections';
+import type { Theme } from '../../themes/types';
 import styles from './Music.module.css';
 
 /**
- * Background music for a book. Starts (with a slow fade) when the reader opens the book —
- * that click is the user gesture browsers require — and can be paused from a tiny toggle.
+ * Music and voice notes for a book being read. Starts (with a slow fade) when the reader opens
+ * the book — that tap is the gesture browsers require — follows chapters, fades at the end,
+ * ducks under voice notes, and can be paused from the toggle.
  */
-export function useBookMusic(src?: string) {
-  const audio = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const wanted = useRef(true);
-
+export function useBookMusic(book: BookDoc, theme: Theme, opts: { voice?: boolean } = {}) {
+  const tracks = useMemo(() => sectionsOf(book, theme), [book, theme]);
+  const sig = JSON.stringify(tracks, (k, v) => (k === 'score' ? theme.id : v));
+  const [player, setPlayer] = useState<BookAudio | null>(null);
+  const [, rerender] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
-    if (!src) return;
-    const a = new Audio(src);
-    a.loop = true;
-    a.preload = 'auto';
-    a.volume = 0;
-    audio.current = a;
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
-    a.addEventListener('play', onPlay);
-    a.addEventListener('pause', onPause);
+    const p = new BookAudio(tracks, 'book');
+    setPlayer(p);
+    const off = p.subscribe(rerender);
     return () => {
-      a.pause();
-      a.removeEventListener('play', onPlay);
-      a.removeEventListener('pause', onPause);
-      audio.current = null;
-      setPlaying(false);
+      off();
+      p.dispose();
     };
-  }, [src]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig]);
 
-  const fadeTo = (a: HTMLAudioElement, target: number, ms: number, done?: () => void) => {
-    const from = a.volume;
-    const t0 = performance.now();
-    const step = (t: number) => {
-      const k = Math.min(1, (t - t0) / ms);
-      a.volume = from + (target - from) * k;
-      if (k < 1) requestAnimationFrame(step);
-      else done?.();
-    };
-    requestAnimationFrame(step);
+  const voiceTimer = useRef(0);
+  const voiceOn = opts.voice !== false;
+  const [voice, setVoice] = useState<string | undefined>();
+  const onView = useCallback(
+    (view: number, built: BuiltBook) => {
+      if (!player) return;
+      const i = spreadIndexOfView(book, built, view);
+      player.setSection(i < 0 ? 'book' : sectionAt(book, i, tracks));
+      const kind = built.views[view]?.kind;
+      player.setEnding(kind === 'finis' || kind === 'back');
+      window.clearTimeout(voiceTimer.current);
+      const note = built.views[view]?.spread?.voice;
+      setVoice(note?.src || undefined);
+      if (voiceOn && note?.src) voiceTimer.current = window.setTimeout(() => void player.playVoice(note.src), 600);
+    },
+    [book, tracks, player, voiceOn],
+  );
+  const onTurn = useCallback(() => {
+    window.clearTimeout(voiceTimer.current);
+    player?.stopVoice();
+  }, [player]);
+  useEffect(() => () => window.clearTimeout(voiceTimer.current), []);
+
+  return {
+    available: player?.available ?? false,
+    playing: player?.playing ?? false,
+    voicePlaying: player?.voicePlaying ?? false,
+    /** The voice note of the page being read, if any. */
+    voice,
+    start: useCallback(() => player?.start(), [player]),
+    toggle: useCallback(() => player?.toggle(), [player]),
+    playVoice: useCallback((src: string) => player?.playVoice(src) ?? Promise.resolve(), [player]),
+    stopVoice: useCallback(() => player?.stopVoice(), [player]),
+    onView,
+    onTurn,
   };
+}
 
-  const start = useCallback(() => {
-    const a = audio.current;
-    if (!a || !wanted.current || !a.paused) return;
-    a.play()
-      .then(() => fadeTo(a, 0.55, 2400))
-      .catch(() => undefined);
-  }, []);
-
-  const toggle = useCallback(() => {
-    const a = audio.current;
-    if (!a) return;
-    if (a.paused) {
-      wanted.current = true;
-      a.play()
-        .then(() => fadeTo(a, 0.55, 900))
-        .catch(() => undefined);
-    } else {
-      wanted.current = false;
-      fadeTo(a, 0, 500, () => a.pause());
-    }
-  }, []);
-
-  return { available: !!src, playing, start, toggle };
+/** Replay (or stop) the voice note of the page being read. */
+export function VoiceButton({ playing, onPlay, onStop }: { playing: boolean; onPlay: () => void; onStop: () => void }) {
+  return (
+    <button type="button" className={`${styles.toggle} ${styles.voiceBtn}`} data-playing={playing || undefined} onClick={playing ? onStop : onPlay}>
+      <span aria-hidden>{playing ? '■' : '▶'}</span>
+      <span className={styles.label}>{playing ? '停止留言' : '听一段留言'}</span>
+    </button>
+  );
 }
 
 export function MusicToggle({ playing, onToggle }: { playing: boolean; onToggle: () => void }) {
@@ -84,5 +93,40 @@ export function MusicToggle({ playing, onToggle }: { playing: boolean; onToggle:
       </span>
       <span className={styles.label}>{playing ? '音乐' : '静音'}</span>
     </button>
+  );
+}
+
+/** A song on a music platform: the reader opens it in their own app (full song, their account). */
+export function MusicLink({ link }: { link: Extract<MusicChoice, { kind: 'link' }> }) {
+  const [hidden, setHidden] = useState(false);
+  const [copied, setCopied] = useState(false);
+  if (hidden) return null;
+  const app = PLATFORM_NAMES[link.platform];
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link.url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      window.prompt('复制链接', link.url);
+    }
+  };
+  return (
+    <aside className={styles.link} aria-label="这本书的配乐">
+      <p className={styles.linkLine}>
+        <span aria-hidden>♪ </span>这本书配了一首歌{link.title ? <b>《{link.title}》</b> : null}
+      </p>
+      <p className={styles.linkActions}>
+        <a href={link.url} target="_blank" rel="noopener noreferrer">
+          在{app}里播放
+        </a>
+        <button type="button" onClick={() => void copy()}>
+          {copied ? '已复制' : '复制链接'}
+        </button>
+        <button type="button" onClick={() => setHidden(true)} aria-label="收起">
+          ×
+        </button>
+      </p>
+    </aside>
   );
 }

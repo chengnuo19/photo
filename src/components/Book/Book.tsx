@@ -23,6 +23,8 @@ export interface BookHandle {
   prev(): void;
   /** Number of views (cover, each spread, back cover…) in the current layout. */
   viewCount(): number;
+  /** closed · opening · reading · flipping · closing · ended */
+  phase(): string;
 }
 
 interface Props {
@@ -33,13 +35,15 @@ interface Props {
   onView?: (view: number, built: BuiltBook) => void;
   /** Called when the reader opens the book (first page turn from the cover). */
   onOpen?: () => void;
+  /** A page turn begins (any direction). */
+  onTurn?: () => void;
   /** A view the reader stopped at last time: offers "continue where you left off" on the closed book. */
   resumeView?: number;
   /** Being recorded (video / long image): no hints, buttons or next-page polaroid on the table. */
   recording?: boolean;
 }
 
-export function Book({ book, reserveBottom = 0, handle, onView, onOpen, resumeView, recording }: Props) {
+export function Book({ book, reserveBottom = 0, handle, onView, onOpen, onTurn, resumeView, recording }: Props) {
   const theme = getTheme(book.themeId);
   const editing = !!useEdit();
   const { layout, pageWidth: W, pageHeight: H } = useBookSize(reserveBottom);
@@ -92,11 +96,15 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen, resumeVi
 
   /* ---------------------------------------------------------------- engine events */
   const playFlip = useFlipSound(theme, book.sound.flip && !reduced);
+  const haptics =
+    book.sound.flip && !reduced && !editing && !recording && typeof navigator !== 'undefined' && 'vibrate' in navigator && window.matchMedia('(pointer: coarse)').matches;
 
   const onViewRef = useRef(onView);
   onViewRef.current = onView;
   const onOpenRef = useRef(onOpen);
   onOpenRef.current = onOpen;
+  const onTurnRef = useRef(onTurn);
+  onTurnRef.current = onTurn;
 
   const onFlip = useCallback(
     (index: number) => {
@@ -119,12 +127,15 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen, resumeVi
       if (state === 'read') settle();
       if ((state === 'flipping' || state === 'user_fold') && prev !== 'flipping' && prev !== 'user_fold') {
         if (l.index === 0) onOpenRef.current?.();
+        onTurnRef.current?.();
         const t = direction === null ? l.index : targetIndex(l.index, l.last, l.landscape, direction);
         const board = l.index === 0 || l.index === l.last || t === 0 || t === l.last;
         playFlip(board ? 'board' : 'page');
+        // a small tick in the hand (Android; iPhone browsers cannot vibrate)
+        if (haptics) navigator.vibrate?.(board ? 14 : 7);
       }
     },
-    [dispatch, settle, playFlip],
+    [dispatch, settle, playFlip, haptics],
   );
 
   const onProgress = useCallback(
@@ -176,11 +187,14 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen, resumeVi
     setTurningOver(true);
     window.setTimeout(() => {
       flipRef.current?.jump(0);
+      live.current.index = 0;
+      viewRef.current = 0;
       dispatch({ type: 'reset', index: 0, last: live.current.last });
       settle();
+      onViewRef.current?.(0, built);
       window.setTimeout(() => setTurningOver(false), 60);
     }, reduced ? 50 : 420);
-  }, [reduced, dispatch, settle]);
+  }, [reduced, dispatch, settle, built]);
 
   const jumpToView = useCallback(
     (v: number) => {
@@ -213,6 +227,7 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen, resumeVi
       next,
       prev,
       viewCount: () => built.views.length,
+      phase: () => phaseRef.current,
     }),
     [jumpToView, next, prev, built],
   );

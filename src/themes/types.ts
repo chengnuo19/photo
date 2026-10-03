@@ -2,6 +2,7 @@ import type { ComponentType, CSSProperties } from 'react';
 import type { PageKind, PageSpec } from '../data/buildPages';
 import type { BookDoc, BookImage, ThemeId } from '../data/schema';
 import type { Recipe } from '../sound/engine';
+import type { Score } from '../sound/score';
 
 export interface PageProps {
   book: BookDoc;
@@ -115,6 +116,8 @@ export interface SoundKit {
   unwrap?: Recipe;
   /** Easter eggs in the scene, by id. */
   egg?: Record<string, Recipe>;
+  /** The theme's own background music (used when the author picked no song). */
+  music?: Score;
 }
 
 /** Default photo treatment. `css` is a CSS filter; `overlay` adds texture on top of the photo. */

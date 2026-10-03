@@ -74,6 +74,38 @@ export interface SpreadOverrides {
   filter?: boolean;
 }
 
+/** Where a song link opens (the reader's own music app plays it). */
+export type MusicPlatform = 'netease' | 'qq' | 'kugou' | 'kuwo' | 'apple' | 'spotify' | 'other';
+
+/**
+ * The book's music. Absent = the theme's own music.
+ * - `theme`: synthesised by the theme (sound/score.ts), nothing to download
+ * - `file`:  a song the author added; `start` = seconds to skip (start at the chorus)
+ * - `link`:  a song on a music platform, opened in the reader's app (cannot play inside the book)
+ * - `none`:  silence
+ */
+export type MusicChoice =
+  | { kind: 'theme' }
+  | { kind: 'file'; src: AssetSrc; title?: string; start?: number }
+  | { kind: 'link'; url: string; title?: string; platform: MusicPlatform }
+  | { kind: 'none' };
+
+/** What a chapter can play (a link is for the whole book only). */
+export type ChapterMusic = Exclude<MusicChoice, { kind: 'link' }>;
+
+/** A chapter starts at the spread that carries it and runs until the next one. */
+export interface Chapter {
+  title?: string;
+  /** Absent = keep playing what was playing. */
+  music?: ChapterMusic;
+}
+
+/** A spoken note for a page, played when the reader arrives there. */
+export interface VoiceNote {
+  src: AssetSrc;
+  seconds: number;
+}
+
 export interface Spread {
   id: string;
   layout: SpreadLayout;
@@ -90,6 +122,9 @@ export interface Spread {
   snapshot?: BookImage;
   stickers?: Sticker[];
   overrides?: SpreadOverrides;
+  /** A new chapter begins here. */
+  chapter?: Chapter;
+  voice?: VoiceNote;
 }
 
 export interface Dedication {
@@ -119,9 +154,25 @@ export interface BookMeta {
   letter?: Letter;
 }
 
+/** How the book is given (data/gift.ts). The wait and the question are a ritual, not a lock. */
+export interface Gift {
+  unwrap?: boolean;
+  to?: string;
+  from?: string;
+  /** Not to be opened before this moment (ms since 1970). */
+  unlockAt?: number;
+  /** Answer this first. `answers` are salted hashes of the accepted answers. */
+  quiz?: { question: string; answers: string[]; salt: string; hint?: string };
+  /** Once opened, the book turns its own pages. */
+  autoplay?: boolean;
+}
+
+/** Current document version (data/migrate.ts upgrades older ones). */
+export const DOC_VERSION = 2;
+
 export interface BookDoc {
   id: string;
-  version: 1;
+  version: 1 | 2;
   themeId: ThemeId;
   /** Colour variant of the theme; defaults to the theme's first palette. */
   paletteId?: string;
@@ -129,10 +180,11 @@ export interface BookDoc {
   coverVariant?: string;
   meta: BookMeta;
   cover: { image?: BookImage };
-  music?: { src: AssetSrc; title?: string };
+  /** Absent = the theme's music. */
+  music?: MusicChoice;
   sound: { flip: boolean };
   /** Gift wrapping shown before the cover when the book is shared (default on). */
-  gift?: { unwrap?: boolean; to?: string; from?: string };
+  gift?: Gift;
   /** Apply the theme's photo filter (default on). */
   photoFilter?: boolean;
   spreads: Spread[];

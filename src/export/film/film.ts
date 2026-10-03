@@ -1,6 +1,9 @@
 import type { BuiltBook } from '../../data/buildPages';
 import type { BookDoc } from '../../data/schema';
-import { paper, renderSoundtrack, type Cue } from '../../sound/engine';
+import { DWELL, DWELL_SAME, INTRO, OUTRO, TURN, VOICE_AT } from '../../data/timing';
+import { paper, type Cue } from '../../sound/engine';
+import { sectionAt, sectionsOf, spreadIndexOfView } from '../../sound/sections';
+import { renderSoundtrack, type MusicSegment, type VoiceCue } from '../../sound/soundtrack';
 import { srcToBlob } from '../../storage/assets';
 import { getTheme } from '../../themes';
 import { composeLongImage, pickVideoMime, type Segment } from '../capture';
@@ -18,13 +21,6 @@ import { FilmRenderer, FORMATS, geometryFor, pagesFor, turnsOf, type FilmFormat,
 const FPS = 30;
 /** Mostly still pages: 3 Mbps keeps text crisp and a 50 s book near 20 MB (a size chat apps accept as video). */
 const BITRATE = 3_000_000;
-/** Timing matches the screen-recorded video. */
-const INTRO = 1.2;
-const TURN = 0.95;
-const DWELL = 2.6;
-/** Second page of the same spread (portrait): a shorter look. */
-const DWELL_SAME = 1.7;
-const OUTRO = 2.4;
 const CAPTION_IN = { delay: 0.12, fade: 0.7 };
 const CAPTION_OUT = 0.26;
 
@@ -46,7 +42,8 @@ function timeline(built: BuiltBook) {
   turns.forEach((turn, k) => {
     shots.push({ kind: 'turn', turn, start: t, end: (t += TURN) });
     const sameView = built.pages[turn.to].view === built.pages[turn.from].view;
-    const hold = k === turns.length - 1 ? OUTRO : sameView ? DWELL_SAME : DWELL;
+    const voice = sameView ? undefined : built.views[built.pages[turn.to].view]?.spread?.voice;
+    const hold = Math.max(k === turns.length - 1 ? OUTRO : sameView ? DWELL_SAME : DWELL, voice ? VOICE_AT + voice.seconds + 0.8 : 0);
     shots.push({ kind: 'rest', index: turn.to, start: t, end: (t += hold) });
   });
   return { shots, seconds: t };
@@ -183,7 +180,8 @@ async function lookOf(src: Source, snap: Snap): Promise<Look> {
 /* ------------------------------------------------------------------ sound */
 
 async function soundtrack(src: Source, seconds: number, shots: Shot[]) {
-  const theme = getTheme(src.book.themeId);
+  const { book, built } = src;
+  const theme = getTheme(book.themeId);
   const cues: Cue[] = [];
   if (src.sound) {
     for (const s of shots) {
@@ -192,17 +190,53 @@ async function soundtrack(src: Source, seconds: number, shots: Shot[]) {
       cues.push({ at: s.start + 0.02, recipe: theme.sound?.[kind] ?? paper(kind) });
     }
   }
-  let music: { data: ArrayBuffer; from: number; volume: number } | undefined;
-  const firstTurn = shots.find((s) => s.kind === 'turn');
-  if (src.book.music?.src && firstTurn) {
-    try {
-      music = { data: await (await srcToBlob(src.book.music.src)).arrayBuffer(), from: firstTurn.start, volume: 0.55 };
-    } catch {
-      /* no music */
+
+  // music: silent on the closed cover, then the section each shot belongs to, gone at the end
+  const tracks = sectionsOf(book, theme);
+  const viewOf = (s: Shot) => built.pages[s.kind === 'rest' ? s.index : s.turn.to]?.view ?? 0;
+  const keyOf = (s: Shot, i: number) => {
+    if (i === 0) return null;
+    const v = viewOf(s);
+    const kind = built.views[v]?.kind;
+    if (kind === 'finis' || kind === 'back') return null;
+    const si = spreadIndexOfView(book, built, v);
+    return si < 0 ? 'book' : sectionAt(book, si, tracks);
+  };
+  const runs: { key: string; at: number; until: number }[] = [];
+  shots.forEach((s, i) => {
+    const key = keyOf(s, i);
+    const last = runs[runs.length - 1];
+    if (key && last?.key === key && last.until === s.start) last.until = s.end;
+    else if (key) runs.push({ key, at: s.start, until: s.end });
+  });
+  const music: MusicSegment[] = [];
+  const bytes = new Map<string, ArrayBuffer | null>();
+  for (const [i, r] of runs.entries()) {
+    const spec = tracks[r.key];
+    const ends = i === runs.length - 1 || runs[i + 1].at !== r.until;
+    const seg = { at: r.at, until: r.until, volume: 0, fadeIn: i === 0 ? 2.4 : 1.6, fadeOut: ends ? 4 : 1.6 };
+    if (spec?.kind === 'score') music.push({ ...seg, score: spec.score, volume: 0.75 });
+    else if (spec?.kind === 'file') {
+      if (!bytes.has(spec.src)) bytes.set(spec.src, await srcToBlob(spec.src).then((b) => b.arrayBuffer()).catch(() => null));
+      const data = bytes.get(spec.src);
+      if (data) music.push({ ...seg, data, offset: spec.start, volume: 0.55 });
     }
   }
-  if (!cues.length && !music) return null;
-  return renderSoundtrack({ seconds, cues, music });
+
+  // voice notes, once per page (a portrait view's second page does not repeat it)
+  const voices: VoiceCue[] = [];
+  for (const s of shots) {
+    if (s.kind !== 'rest' || s.index === 0) continue;
+    const prevTurn = shots[shots.indexOf(s) - 1];
+    if (prevTurn?.kind === 'turn' && built.pages[prevTurn.turn.from].view === built.pages[s.index].view) continue;
+    const voice = built.views[built.pages[s.index].view]?.spread?.voice;
+    if (!voice?.src) continue;
+    const data = await srcToBlob(voice.src).then((b) => b.arrayBuffer()).catch(() => null);
+    if (data) voices.push({ data, at: s.start + VOICE_AT });
+  }
+
+  if (!cues.length && !music.length && !voices.length) return null;
+  return renderSoundtrack({ seconds, cues, music, voices });
 }
 
 /* ------------------------------------------------------------------ the film */

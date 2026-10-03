@@ -1,3 +1,4 @@
+import { migrateDoc } from '../data/migrate';
 import type { BookDoc } from '../data/schema';
 import { newId } from './assets';
 import { assetIdsOf, getAsset, getBook, putAsset, putBook, type StoredAsset } from './db';
@@ -12,7 +13,7 @@ import { assetIdsOf, getAsset, getBook, putAsset, putBook, type StoredAsset } fr
  *   assets/<id>.t.<ext>   its thumbnail
  */
 const FORMAT = 'memory-book-backup';
-const VERSION = 1;
+const VERSION = 2;
 
 interface AssetEntry {
   id: string;
@@ -38,8 +39,21 @@ interface Manifest {
 
 type Progress = (msg: string) => void;
 
-const EXT: Record<string, string> = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a' };
-const ext = (type: string) => EXT[type] ?? 'bin';
+const EXT: Record<string, string> = {
+  'image/webp': 'webp',
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'audio/mpeg': 'mp3',
+  'audio/mp4': 'm4a',
+  'audio/aac': 'aac',
+  'audio/ogg': 'ogg',
+  'audio/wav': 'wav',
+  'audio/webm': 'weba',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/quicktime': 'mov',
+};
+const ext = (type: string) => EXT[type.split(';')[0]] ?? 'bin';
 
 export async function backupBooks(docs: BookDoc[], progress: Progress = () => {}): Promise<{ blob: Blob; filename: string }> {
   const { default: JSZip } = await import('jszip');
@@ -121,7 +135,7 @@ export async function restoreBackup(file: Blob, progress: Progress = () => {}): 
   }
 
   const restored: string[] = [];
-  for (const doc of manifest.books) {
+  for (const doc of manifest.books.map(migrateDoc)) {
     const copy = (await getBook(doc.id)) ? { ...doc, id: newId() } : doc;
     await putBook(copy);
     restored.push(copy.id);

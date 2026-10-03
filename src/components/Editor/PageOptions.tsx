@@ -6,7 +6,9 @@ import { newId } from '../../storage/assets';
 import { activeDecor, getTheme } from '../../themes';
 import { Dot, QuietButton } from '../ui/QuietButton';
 import { useEdit } from './EditContext';
+import { ChapterTray } from './ChapterTray';
 import { LayoutIcon } from './LayoutIcon';
+import { VoiceTray } from './VoiceTray';
 import s from './PageOptions.module.css';
 
 interface Props {
@@ -21,7 +23,7 @@ const LAYOUTS = Object.keys(LAYOUT_LABELS) as SpreadLayout[];
 /** Options for whatever is open right now — one quiet line, small trays open above it. */
 export function PageOptions({ doc, view, update, onRemoveSpread }: Props) {
   const edit = useEdit();
-  const [tray, setTray] = useState<null | 'stickers'>(null);
+  const [tray, setTray] = useState<null | 'stickers' | 'chapter' | 'voice'>(null);
   const theme = getTheme(doc.themeId);
   if (!view) return null;
 
@@ -90,7 +92,7 @@ export function PageOptions({ doc, view, update, onRemoveSpread }: Props) {
         )}
         <Dot />
         <span className={s.trayWrap}>
-          <QuietButton active={tray === 'stickers'} onClick={() => setTray(tray ? null : 'stickers')}>
+          <QuietButton active={tray === 'stickers'} onClick={() => setTray(tray === 'stickers' ? null : 'stickers')}>
             加贴纸
           </QuietButton>
           {tray === 'stickers' && (
@@ -130,6 +132,19 @@ export function PageOptions({ doc, view, update, onRemoveSpread }: Props) {
             再放一张（{sp.images.length}/{cap}）
           </QuietButton>
         )}
+        <Dot />
+        <span className={s.trayWrap}>
+          <QuietButton active={tray === 'voice' || !!sp.voice} onClick={() => setTray(tray === 'voice' ? null : 'voice')} aria-expanded={tray === 'voice'}>
+            {sp.voice ? '语音留言 ✓' : '语音留言'}
+          </QuietButton>
+          {tray === 'voice' && <VoiceTray key={sp.id} sp={sp} set={set} />}
+        </span>
+        <span className={s.trayWrap}>
+          <QuietButton active={tray === 'chapter' || !!sp.chapter} onClick={() => setTray(tray === 'chapter' ? null : 'chapter')} aria-expanded={tray === 'chapter'}>
+            章节
+          </QuietButton>
+          {tray === 'chapter' && <ChapterTray key={sp.id} doc={doc} sp={sp} theme={theme} set={set} update={update} />}
+        </span>
         <Dot />
         <QuietButton onClick={() => onRemoveSpread(sp.id)}>删除这一页</QuietButton>
       </div>

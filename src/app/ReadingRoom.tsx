@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Book } from '../components/Book/Book';
+import { useRef, useState } from 'react';
+import { Book, type BookHandle } from '../components/Book/Book';
+import { SlideshowControls, useSlideshow } from '../components/Slideshow/Slideshow';
 import { Unwrap } from '../components/Unwrap/Unwrap';
 import { Masthead } from '../components/Masthead/Masthead';
-import { MusicToggle, useBookMusic } from '../components/Music/Music';
+import { MusicLink, MusicToggle, useBookMusic, VoiceButton } from '../components/Music/Music';
 import { Scene } from '../components/Scene/Scene';
 import { QuietLink } from '../components/ui/QuietButton';
 import type { BookDoc } from '../data/schema';
@@ -17,6 +18,7 @@ export function ReadingRoom({
   editHref,
   unwrap = false,
   onUnwrapped,
+  preview = false,
 }: {
   book: BookDoc;
   shelfHref?: string;
@@ -24,12 +26,23 @@ export function ReadingRoom({
   /** Show the gift wrapping first. */
   unwrap?: boolean;
   onUnwrapped?: () => void;
+  /** The author reading their own book in the app (may skip the gift's wait and question). */
+  preview?: boolean;
 }) {
   const [sealed, setSealed] = useState(unwrap);
   const [resumeView] = useState(() => lastView.get(book.id));
   const ready = useFontsReady(fontSample(book), fontsOf(book), book.themeId);
-  const music = useBookMusic(book.music?.src);
   const theme = getTheme(book.themeId);
+  const music = useBookMusic(book, theme);
+  const [opened, setOpened] = useState(false);
+  const open = () => {
+    setOpened(true);
+    music.start();
+  };
+  const bookRef = useRef<BookHandle>(null);
+  const voicePlaying = useRef(false);
+  voicePlaying.current = music.voicePlaying;
+  const show = useSlideshow(bookRef, { voicePlaying: () => voicePlaying.current });
   return (
     <main className={`${styles.room} ${theme.className}`} style={themeStyle(book)} data-ready={ready || undefined}>
       <Scene theme={theme} mode="read" sound={book.sound.flip} />
@@ -43,22 +56,34 @@ export function ReadingRoom({
           theme={theme}
           book={book}
           sound={book.sound.flip}
-          onOpen={music.start}
+          onOpen={open}
+          preview={preview}
           onDone={() => {
             setSealed(false);
             onUnwrapped?.();
+            if (book.gift?.autoplay) show.play();
           }}
         />
       )}
       <div className={styles.table} data-sealed={sealed || undefined}>
         <Book
           book={book}
-          onOpen={music.start}
+          handle={bookRef}
+          onOpen={open}
+          onTurn={music.onTurn}
           resumeView={resumeView}
-          onView={(v, built) => (v > 0 && v < built.views.length - 1 ? lastView.set(book.id, v) : v > 0 && lastView.clear(book.id))}
+          onView={(v, built) => {
+            music.onView(v, built);
+            show.onView(v, built);
+            if (v > 0 && v < built.views.length - 1) lastView.set(book.id, v);
+            else if (v > 0) lastView.clear(book.id);
+          }}
         />
       </div>
       {music.available && <MusicToggle playing={music.playing} onToggle={music.toggle} />}
+      {!sealed && <SlideshowControls show={show} />}
+      {music.voice && opened && <VoiceButton playing={music.voicePlaying} onPlay={() => void music.playVoice(music.voice!)} onStop={music.stopVoice} />}
+      {book.music?.kind === 'link' && book.music.url && opened && !sealed && <MusicLink link={book.music} />}
     </main>
   );
 }

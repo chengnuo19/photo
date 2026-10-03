@@ -774,3 +774,161 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ------------------------------------------------------------------ the wait and the question */
+
+.overlay[data-locked] .gift {
+  cursor: default;
+}
+
+.gift[data-nudge] {
+  animation: nudge 0.45s ease both;
+}
+
+.gift[data-nudge='b'] {
+  animation-name: nudge2;
+}
+
+@keyframes nudge {
+  20% {
+    transform: rotate(-3deg);
+  }
+  45% {
+    transform: rotate(2.5deg);
+  }
+  70% {
+    transform: rotate(-1.5deg);
+  }
+}
+
+@keyframes nudge2 {
+  20% {
+    transform: rotate(3deg);
+  }
+  45% {
+    transform: rotate(-2.5deg);
+  }
+  70% {
+    transform: rotate(1.5deg);
+  }
+}
+
+.lock,
+.quiz {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--room-strong, #3d372f);
+  font-family: var(--font-hand, serif);
+  text-align: center;
+}
+
+.below {
+  animation: arrive 0.9s 0.3s both;
+}
+
+.clock {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+}
+
+.clock b {
+  font-family: var(--font-serif, serif);
+  font-size: 24px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock span {
+  color: var(--room-ink, #8d867b);
+}
+
+.when {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--room-ink, #8d867b);
+}
+
+.quiz label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.question {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+
+.quiz input {
+  width: min(280px, 80vw);
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 1.5px solid var(--room-soft, #6f675b);
+  background: transparent;
+  color: inherit;
+  font: 16px/1.4 var(--font-cn, serif);
+  text-align: center;
+  outline: none;
+}
+
+.quiz input:focus {
+  border-bottom-color: var(--room-strong, #3d372f);
+}
+
+.quiz button[type='submit'] {
+  padding: 6px 18px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font: 13px var(--font-cn, serif);
+  letter-spacing: 0.3em;
+  cursor: pointer;
+}
+
+.quiz[data-shake] {
+  animation: shake 0.45s ease;
+}
+
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-7px);
+  }
+  40%,
+  80% {
+    transform: translateX(7px);
+  }
+}
+
+.again {
+  margin: 0;
+  font-size: 13px;
+  color: var(--room-ink, #8d867b);
+}
+
+.skip {
+  margin-top: 4px;
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  color: var(--room-ink, #8d867b);
+  font: 11px var(--font-hand, serif);
+  letter-spacing: 0.1em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gift[data-nudge],
+  .quiz[data-shake] {
+    animation: none;
+  }
+}

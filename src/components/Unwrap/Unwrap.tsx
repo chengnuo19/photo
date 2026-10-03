@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { checkAnswer, countdown, msUntilUnlock } from '../../data/gift';
 import type { BookDoc } from '../../data/schema';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { armAudio, noiseBurst, paper, play, tone, type Recipe } from '../../sound/engine';
@@ -14,11 +15,43 @@ const OPEN_MS = 1500;
  * The gift wrapping in front of a shared book. One tap opens it (and counts as the gesture
  * that lets music and sound start); when the animation ends the book is on the table.
  */
-export function Unwrap({ theme, book, sound, onOpen, onDone }: { theme: Theme; book: BookDoc; sound: boolean; onOpen: () => void; onDone: () => void }) {
+export function Unwrap({
+  theme,
+  book,
+  sound,
+  onOpen,
+  onDone,
+  preview = false,
+}: {
+  theme: Theme;
+  book: BookDoc;
+  sound: boolean;
+  onOpen: () => void;
+  onDone: () => void;
+  /** The author looking at their own book: may skip the wait and the question. */
+  preview?: boolean;
+}) {
   const spec = theme.wrap ?? DEFAULT_WRAP;
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
+
+  // not before its time…
+  const [now, setNow] = useState(() => Date.now());
+  const [skipped, setSkipped] = useState(false);
+  const left = skipped ? 0 : msUntilUnlock(book, now);
+  useEffect(() => {
+    if (!book.gift?.unlockAt || skipped) return;
+    const t = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, [book.gift?.unlockAt, skipped]);
+  // …and not before the question is answered
+  const quiz = book.gift?.quiz;
+  const [solved, setSolved] = useState(() => !quiz?.answers.length || wasSolved(book.id));
+  const locked = left > 0 || !solved;
+  const [nudge, setNudge] = useState(0);
+  const lockedRef = useRef(locked);
+  lockedRef.current = locked;
   // "给…" / "致…" / "To …" is added by the wrapping itself
   const to = (book.gift?.to?.trim() || book.meta.dedication?.to?.trim() || '').replace(/^(献给|送给|给|致|to[:：]?)\s*/i, '');
   const from = book.gift?.from?.trim() || book.meta.author?.trim() || '';
@@ -32,6 +65,8 @@ export function Unwrap({ theme, book, sound, onOpen, onDone }: { theme: Theme; b
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!['ArrowRight', 'ArrowLeft', 'PageDown', 'PageUp', ' ', 'Enter'].includes(e.key)) return;
+      // typing the answer
+      if ((e.target as HTMLElement | null)?.closest?.('input, textarea')) return;
       e.preventDefault();
       if (e.key !== 'ArrowLeft' && e.key !== 'PageUp') startRef.current();
     };
@@ -42,6 +77,10 @@ export function Unwrap({ theme, book, sound, onOpen, onDone }: { theme: Theme; b
   const openRef = useRef(false);
   const start = () => {
     if (openRef.current) return;
+    if (lockedRef.current) {
+      setNudge((n) => n + 1);
+      return;
+    }
     openRef.current = true;
     setOpen(true);
     if (sound) play(theme.sound?.unwrap ?? WRAP_SOUND[spec.kind]);
@@ -51,16 +90,125 @@ export function Unwrap({ theme, book, sound, onOpen, onDone }: { theme: Theme; b
   startRef.current = start;
 
   return (
-    <div className={s.overlay} data-unwrap data-open={open || undefined} data-kind={spec.kind}>
-      <button ref={btn} type="button" className={s.gift} onClick={start} aria-label={to ? `拆开给${to}的礼物` : '拆开礼物'}>
+    <div className={s.overlay} data-unwrap data-open={open || undefined} data-kind={spec.kind} data-locked={locked || undefined}>
+      <button
+        ref={btn}
+        type="button"
+        className={s.gift}
+        onClick={start}
+        aria-label={to ? `拆开给${to}的礼物` : '拆开礼物'}
+        aria-disabled={locked || undefined}
+        data-nudge={nudge % 2 ? 'a' : nudge ? 'b' : undefined}
+      >
         <Wrap spec={spec} to={to} from={from} />
       </button>
       {/* full-screen effects live outside the gift (its drop-shadow filter would clip them) */}
       {spec.kind === 'ball' && <span className={s.flash} />}
       {spec.kind === 'tape' && <span className={s.static} />}
-      <p className={s.hint}>{to ? `给 ${to} 的一本书 · 轻点拆开` : '轻点拆开'}</p>
+      {left > 0 ? (
+        <div className={s.below} key="wait">
+          <Countdown ms={left} at={book.gift!.unlockAt!} onSkip={preview ? () => setSkipped(true) : undefined} />
+        </div>
+      ) : !solved && quiz ? (
+        <div className={s.below} key="quiz">
+          <Quiz
+            book={book}
+            onSolved={() => {
+              setSolved(true);
+              markSolved(book.id);
+            }}
+            onSkip={preview ? () => setSolved(true) : undefined}
+          />
+        </div>
+      ) : (
+        <p className={s.hint}>{to ? `给 ${to} 的一本书 · 轻点拆开` : '轻点拆开'}</p>
+      )}
     </div>
   );
+}
+
+/* ------------------------------------------------------------------ the wait and the question */
+
+function Countdown({ ms, at, onSkip }: { ms: number; at: number; onSkip?: () => void }) {
+  const c = countdown(ms);
+  const p = (n: number) => String(n).padStart(2, '0');
+  const when = new Date(at);
+  const date = `${when.getFullYear()} 年 ${when.getMonth() + 1} 月 ${when.getDate()} 日 ${p(when.getHours())}:${p(when.getMinutes())}`;
+  return (
+    <div className={s.lock} role="status">
+      <p className={s.clock}>
+        {c.days > 0 && (
+          <>
+            <b>{c.days}</b> 天{' '}
+          </>
+        )}
+        <b>{p(c.hours)}</b>:<b>{p(c.minutes)}</b>:<b>{p(c.seconds)}</b>
+        <span> 后可以拆开</span>
+      </p>
+      <p className={s.when}>{date}</p>
+      {onSkip && (
+        <button type="button" className={s.skip} onClick={onSkip}>
+          作者预览：跳过等待
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Quiz({ book, onSolved, onSkip }: { book: BookDoc; onSolved: () => void; onSkip?: () => void }) {
+  const q = book.gift!.quiz!;
+  const [value, setValue] = useState('');
+  const [wrong, setWrong] = useState(0);
+  const [shake, setShake] = useState(false);
+  const submit = () => {
+    if (checkAnswer(book, value)) return onSolved();
+    setWrong((w) => w + 1);
+    setShake(true);
+    window.setTimeout(() => setShake(false), 450);
+  };
+  return (
+    <form
+      className={s.quiz}
+      data-shake={shake || undefined}
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+    >
+      <label>
+        <span className={s.question}>{q.question || '先回答一个问题'}</span>
+        <input value={value} onChange={(e) => setValue(e.target.value)} aria-label="答案" placeholder="写下答案" autoComplete="off" enterKeyHint="go" />
+      </label>
+      <button type="submit">打开</button>
+      {wrong > 0 && (
+        <p className={s.again} aria-live="polite">
+          {wrong >= 3 && q.hint ? `提示：${q.hint}` : '再想想～'}
+        </p>
+      )}
+      {onSkip && (
+        <button type="button" className={s.skip} onClick={onSkip}>
+          作者预览：跳过问题
+        </button>
+      )}
+    </form>
+  );
+}
+
+/** A solved question stays solved for the visit (a reload does not ask again). */
+const SOLVED = 'mb-solved:';
+function wasSolved(id: string) {
+  try {
+    return sessionStorage.getItem(SOLVED + id) === '1';
+  } catch {
+    return false;
+  }
+}
+function markSolved(id: string) {
+  try {
+    sessionStorage.setItem(SOLVED + id, '1');
+  } catch {
+    /* asks again next time */
+  }
 }
 
 function Wrap({ spec, to, from }: { spec: WrapSpec; to: string; from: string }) {

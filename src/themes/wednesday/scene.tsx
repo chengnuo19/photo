@@ -1,6 +1,7 @@
 import { Backdrop, Egg, Prop, grain } from '../../components/Scene/Scene';
 import { noiseBurst, pluck, type Recipe } from '../../sound/engine';
 import s from './scene.module.css';
+import { wednesdayMusic } from './music';
 
 /**
  * A study at Nevermore: pinstripe wallpaper light, a black lace doily under a candle
@@ -41,6 +42,7 @@ export function WednesdayScene() {
 }
 
 export const wednesdaySound = {
+  music: wednesdayMusic,
   // a low cello pizzicato on every page; the covers get the open string
   page: ((v) => pluck(v, { f: 98 + Math.floor(Math.random() * 3) * 12, peak: 0.1, d: 0.9 })) as Recipe,
   board: ((v) => pluck(v, { f: 65.4, peak: 0.14, d: 1.4 })) as Recipe,

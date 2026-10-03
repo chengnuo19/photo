@@ -67,6 +67,44 @@ export function Scene({ theme, mode, sound }: { theme: Theme; mode: 'read' | 'ed
     };
   }, [reduced, mode]);
 
+  // phones: tilting moves the props the same way (iPhone asks permission on the first tap)
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || reduced || mode !== 'read' || window.matchMedia('(pointer: fine)').matches || typeof DeviceOrientationEvent === 'undefined') return;
+    let raf = 0;
+    let base: { b: number; g: number } | null = null;
+    const clamp = (v: number) => Math.max(-1, Math.min(1, v));
+    const onTilt = (e: DeviceOrientationEvent) => {
+      if (e.beta === null || e.gamma === null) return;
+      const b = e.beta;
+      const g = e.gamma;
+      // the way the phone is held is "level"; it follows slowly when the reader settles
+      base = base ? { b: base.b + (b - base.b) * 0.02, g: base.g + (g - base.g) * 0.02 } : { b, g };
+      const bb = base;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        el.dataset.tilt = '';
+        el.style.setProperty('--mx', clamp((g - bb.g) / 18).toFixed(3));
+        el.style.setProperty('--my', clamp((b - bb.b) / 18).toFixed(3));
+      });
+    };
+    const listen = () => window.addEventListener('deviceorientation', onTilt);
+    const Perm = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<'granted' | 'denied'> };
+    let ask: ((e: Event) => void) | null = null;
+    if (Perm.requestPermission) {
+      ask = () => {
+        window.removeEventListener('pointerup', ask!);
+        Perm.requestPermission!().then((r) => r === 'granted' && listen(), () => undefined);
+      };
+      window.addEventListener('pointerup', ask);
+    } else listen();
+    return () => {
+      cancelAnimationFrame(raf);
+      if (ask) window.removeEventListener('pointerup', ask);
+      window.removeEventListener('deviceorientation', onTilt);
+    };
+  }, [reduced, mode]);
+
   const C = theme.scene;
   if (!C) return null;
   return (
