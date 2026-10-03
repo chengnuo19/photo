@@ -34,6 +34,8 @@ export interface BookImage {
   focal?: Focal;
   /** Small version for the polaroid preview; falls back to `src`. */
   thumb?: AssetSrc;
+  /** A short silent clip that loops over the picture (`src` stays its still). */
+  motion?: { src: AssetSrc; seconds: number };
 }
 
 /**

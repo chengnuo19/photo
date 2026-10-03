@@ -126,7 +126,8 @@ export function PageOptions({ doc, view, update, onRemoveSpread }: Props) {
           <QuietButton
             onClick={async () => {
               const im = await edit?.pickImage();
-              if (im) set((x) => void x.images.push({ src: im.src, thumb: im.thumb, alt: im.name.replace(/\.[^.]+$/, ''), focal: { x: 0.5, y: 0.5 } }));
+              if (im)
+                set((x) => void x.images.push({ src: im.src, thumb: im.thumb, alt: im.name.replace(/\.[^.]+$/, ''), focal: { x: 0.5, y: 0.5 }, ...(im.motion ? { motion: im.motion } : {}) }));
             }}
           >
             再放一张（{sp.images.length}/{cap}）

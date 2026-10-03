@@ -16,7 +16,7 @@ import { fontsOf, getTheme, listThemes, themeStyle, useThemes } from '../themes'
 import { download, exportBook, type ExportKind, type ExportQuality } from '../export/exportBook';
 import { fontSample, useFontsReady } from '../hooks/useFontsReady';
 import { isSampleId, useLoadedBook } from '../hooks/useLoadedBook';
-import { IMAGE_ACCEPT, ImageDecodeError, importAudio, importImage, importImages, importLabel, isImageFile, resolveBook } from '../storage/assets';
+import { ImageDecodeError, importAudio, importImages, importLabel, importMedia, isMediaFile, MEDIA_ACCEPT, resolveBook } from '../storage/assets';
 import { backupBooks } from '../storage/backup';
 import { putBook } from '../storage/db';
 import { explainStorageError, fmtBytes, isLow, requestPersist, storageInfo } from '../storage/quota';
@@ -165,11 +165,11 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
   const importFile = useCallback(
     async (f: File) => {
       try {
-        const im = await importImage(f);
+        const im = await importMedia(f);
         setAssetsTick((t) => t + 1);
         return im;
       } catch (err) {
-        flash(err instanceof ImageDecodeError ? failedNote([f.name]) : explainStorageError(err), 'warn');
+        flash(err instanceof ImageDecodeError ? failedNote([f.name], err.reason ? [err.reason] : []) : explainStorageError(err), 'warn');
         return null;
       }
     },
@@ -209,7 +209,7 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
       update,
       importFile,
       pickImage: async () => {
-        const [f] = await openPicker(IMAGE_ACCEPT, false);
+        const [f] = await openPicker(MEDIA_ACCEPT, false);
         return f ? importFile(f) : null;
       },
       pickSong,
@@ -227,13 +227,13 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
 
   const addImages = useCallback(
     async (files: File[]) => {
-      const images = files.filter(isImageFile);
+      const images = files.filter(isMediaFile);
       if (!images.length) return;
       void requestPersist();
       const batch = await importImages(images, (done, total) => setToast({ text: importLabel(done, total), progress: done / total }));
       const imported = batch.images;
       if (batch.error) flash(explainStorageError(batch.error), 'warn');
-      else if (batch.failed.length) flash(failedNote(batch.failed), 'warn');
+      else if (batch.failed.length) flash(failedNote(batch.failed, batch.reasons), 'warn');
       else setToast(null);
       void checkSpace();
       if (!imported.length) return;
@@ -263,6 +263,7 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
   );
 
   const resolved = useMemo(() => resolveBook(doc), [doc, assetsTick]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hasClips = doc.spreads.some((sp) => sp.images.some((i) => i.motion)) || !!doc.cover.image?.motion;
 
   // Jump to newly added pages once the book has rebuilt.
   useEffect(() => {
@@ -504,7 +505,9 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
                     <QuietButton onClick={() => void runExport('zip')}>网站文件夹（.zip）</QuietButton>
                     <p className={styles.menuNote}>解压后拖到 Netlify Drop 即得分享链接，也可直接双击打开</p>
                     <QuietButton onClick={() => void runExport('html')}>单个网页文件（.html）</QuietButton>
-                    <p className={styles.menuNote}>一个文件就是整本书，适合直接发送</p>
+                    <p className={styles.menuNote}>
+                      {hasClips ? '书里有会动的照片：视频会塞进这一个文件，可能很大，建议用上面的 .zip' : '一个文件就是整本书，适合直接发送'}
+                    </p>
                     <p className={styles.menuNote}>发微信</p>
                     <QuietLink href={href.record(doc.id, 'video')} onClick={() => void putBook(docRef.current)}>
                       翻书视频（.mp4）
@@ -533,7 +536,7 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
           current={view.idx}
           onJump={(v) => bookRef.current?.goToView(v)}
           onMove={(from, to) => update((d) => moveSpread(d, from, to))}
-          onAdd={() => void openPicker(IMAGE_ACCEPT, true).then(addImages)}
+          onAdd={() => void openPicker(MEDIA_ACCEPT, true).then(addImages)}
         />
 
         <input

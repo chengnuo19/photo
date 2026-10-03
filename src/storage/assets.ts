@@ -7,7 +7,7 @@ import { assetId, assetIdsOf, assetRef, getAsset, isAssetRef, mapSrcs, putAsset,
  */
 const urls = new Map<string, string>();
 
-function register(a: StoredAsset) {
+export function registerAsset(a: StoredAsset) {
   if (!urls.has(a.id)) urls.set(a.id, URL.createObjectURL(a.blob));
   if (a.thumb && !urls.has(a.id + '#thumb')) urls.set(a.id + '#thumb', URL.createObjectURL(a.thumb));
 }
@@ -16,7 +16,7 @@ function register(a: StoredAsset) {
 export async function loadAssets(doc: BookDoc) {
   const missing = assetIdsOf(doc).filter((id) => !urls.has(id));
   const found = await Promise.all(missing.map(getAsset));
-  found.forEach((a) => a && register(a));
+  found.forEach((a) => a && registerAsset(a));
 }
 
 /** Map `asset:` references to object URLs. Unknown references become '' (shown as broken). */
@@ -34,6 +34,8 @@ const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(
 export interface ImportedImage {
   src: string;
   thumb: string;
+  /** Set for a clip (storage/video.ts): the picture is its still. */
+  motion?: { src: string; seconds: number };
   width: number;
   height: number;
   takenAt?: Date;
@@ -43,7 +45,8 @@ export interface ImportedImage {
 const MAX_EDGE = 2560;
 const THUMB_EDGE = 480;
 
-async function encode(bitmap: ImageBitmap, maxEdge: number, quality: number): Promise<Blob> {
+/** A picture as WebP (JPEG where the browser cannot), long edge at most `maxEdge`. */
+export async function encodePicture(bitmap: ImageBitmap, maxEdge: number, quality: number): Promise<Blob> {
   const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
   const w = Math.round(bitmap.width * scale);
   const h = Math.round(bitmap.height * scale);
@@ -68,7 +71,7 @@ export async function importImage(file: File): Promise<ImportedImage> {
   let bitmap: ImageBitmap, blob: Blob, thumb: Blob, takenAt: Date | undefined;
   try {
     bitmap = await decodeImage(file);
-    [blob, thumb, takenAt] = await Promise.all([encode(bitmap, MAX_EDGE, 0.86), encode(bitmap, THUMB_EDGE, 0.8), readTakenAt(file)]);
+    [blob, thumb, takenAt] = await Promise.all([encodePicture(bitmap, MAX_EDGE, 0.86), encodePicture(bitmap, THUMB_EDGE, 0.8), readTakenAt(file)]);
   } catch {
     throw new ImageDecodeError(file.name);
   }
@@ -85,7 +88,7 @@ export async function importImage(file: File): Promise<ImportedImage> {
   };
   bitmap.close();
   await putAsset(asset);
-  register(asset);
+  registerAsset(asset);
   return { src: assetRef(asset.id), thumb: thumbRef(asset.id), width: asset.width!, height: asset.height!, takenAt, name: file.name };
 }
 
@@ -94,6 +97,24 @@ export const IMAGE_ACCEPT = 'image/*,.heic,.heif';
 
 /** Files worth trying to import as pictures (dropped or picked). */
 export const isImageFile = (f: File) => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name);
+
+/** Photos and short clips (a clip becomes a moving photo). */
+export const MEDIA_ACCEPT = IMAGE_ACCEPT + ',video/*,.mov,.mp4,.m4v,.webm';
+const isClip = (f: File) => f.type.startsWith('video/') || /\.(mov|mp4|m4v|webm)$/i.test(f.name);
+export const isMediaFile = (f: File) => isImageFile(f) || isClip(f);
+
+/** A photo, or a clip as a moving photo. */
+export async function importMedia(file: File): Promise<ImportedImage> {
+  if (!isClip(file)) return importImage(file);
+  const { importVideo, VideoImportError } = await import('./video');
+  try {
+    return await importVideo(file);
+  } catch (err) {
+    // a clip that cannot be read is reported like an unreadable photo
+    if (err instanceof VideoImportError) throw new ImageDecodeError(file.name, err.message);
+    throw err;
+  }
+}
 
 async function decodeImage(file: File): Promise<ImageBitmap> {
   try {
@@ -129,8 +150,12 @@ function decodeHeif(file: Blob): Promise<ImageBitmap> {
 
 /** The file is not an image this browser can read (a broken file, RAW…). */
 export class ImageDecodeError extends Error {
-  constructor(name: string) {
-    super(`无法读取图片：${name}`);
+  constructor(
+    readonly file: string,
+    /** Why, when there is more to say than "cannot be read". */
+    readonly reason?: string,
+  ) {
+    super(reason ?? `无法读取图片：${file}`);
     this.name = 'ImageDecodeError';
   }
 }
@@ -139,6 +164,8 @@ export interface ImportBatch {
   images: ImportedImage[];
   /** Names of files that could not be read (broken files, formats no browser reads). */
   failed: string[];
+  /** What went wrong with some of them, when there is more to say (clips). */
+  reasons: string[];
   /** Set when storage itself failed (quota, private mode) — the batch stops there. */
   error?: unknown;
 }
@@ -151,6 +178,7 @@ export interface ImportBatch {
 export async function importImages(files: File[], onProgress: (done: number, total: number) => void, concurrency = 3): Promise<ImportBatch> {
   const results: (ImportedImage | null)[] = new Array(files.length).fill(null);
   const failed: string[] = [];
+  const reasons: string[] = [];
   let error: unknown;
   let next = 0;
   let done = 0;
@@ -159,16 +187,19 @@ export async function importImages(files: File[], onProgress: (done: number, tot
     while (next < files.length && !error) {
       const i = next++;
       try {
-        results[i] = await importImage(files[i]);
+        results[i] = await importMedia(files[i]);
       } catch (err) {
-        if (err instanceof ImageDecodeError) failed.push(files[i].name);
+        if (err instanceof ImageDecodeError) {
+          failed.push(files[i].name);
+          if (err.reason) reasons.push(err.reason);
+        }
         else error = err; // saving failed: the next files would fail the same way
       }
       onProgress(++done, files.length);
     }
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, files.length) }, worker));
-  return { images: results.filter((r): r is ImportedImage => !!r), failed, error };
+  return { images: results.filter((r): r is ImportedImage => !!r), failed, reasons, error };
 }
 
 /** "正在整理照片 12/40" with a text progress bar the busy toast can show. */
@@ -179,7 +210,7 @@ export function importLabel(done: number, total: number) {
 export async function importAudio(file: File): Promise<string> {
   const asset: StoredAsset = { id: uid(), kind: 'audio', blob: file, name: file.name, createdAt: Date.now() };
   await putAsset(asset);
-  register(asset);
+  registerAsset(asset);
   return assetRef(asset.id);
 }
 

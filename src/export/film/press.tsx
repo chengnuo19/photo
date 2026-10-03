@@ -1,5 +1,6 @@
 import { useImperativeHandle, useMemo, useRef, type Ref } from 'react';
 import { PageFace } from '../../components/Book/Book';
+import { MotionContext } from '../../components/Book/motion';
 import { Caption } from '../../components/Caption/Caption';
 import type { BuiltBook } from '../../data/buildPages';
 import type { BookDoc } from '../../data/schema';
@@ -38,6 +39,7 @@ export function PagePress({ book, built, W, H, captionWidth, handle }: { book: B
   );
 
   return (
+    <MotionContext.Provider value={false}>
     <div ref={root} className={`${styles.press} ${theme.className}`} style={palette} aria-hidden>
       {built.pages.map((p, i) => (
         <div key={p.key} data-press-page={i} className={styles.sheet} style={{ width: W, height: H }}>
@@ -57,5 +59,6 @@ export function PagePress({ book, built, W, H, captionWidth, handle }: { book: B
         ) : null,
       )}
     </div>
+    </MotionContext.Provider>
   );
 }

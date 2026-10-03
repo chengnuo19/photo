@@ -4,7 +4,7 @@ import type { BookDoc, ChapterMusic, MusicChoice } from '../data/schema';
 
 export interface StoredAsset {
   id: string;
-  kind: 'image' | 'audio';
+  kind: 'image' | 'audio' | 'video';
   blob: Blob;
   /** Small preview for thumbnails / the polaroid. */
   thumb?: Blob;
@@ -102,10 +102,11 @@ export function assetIdsOf(doc: BookDoc): string[] {
 
 /** Visit every asset source in a book. */
 export function forEachSrc(doc: BookDoc, fn: (src: string) => void) {
-  const img = (i?: { src: string; thumb?: string }) => {
+  const img = (i?: { src: string; thumb?: string; motion?: { src: string } }) => {
     if (!i) return;
     fn(i.src);
     if (i.thumb) fn(i.thumb);
+    if (i.motion) fn(i.motion.src);
   };
   img(doc.cover.image);
   for (const s of doc.spreads) {
@@ -130,8 +131,10 @@ function mapMusic<T extends MusicChoice | ChapterMusic | undefined>(m: T, map: (
 
 /** Return a copy of the book with every source passed through `map`. */
 export function mapSrcs(doc: BookDoc, map: (src: string) => string): BookDoc {
-  const img = <T extends { src: string; thumb?: string } | undefined>(i: T): T =>
-    i ? ({ ...i, src: map(i.src), ...(i.thumb ? { thumb: map(i.thumb) } : {}) } as T) : i;
+  const img = <T extends { src: string; thumb?: string; motion?: { src: string; seconds: number } } | undefined>(i: T): T =>
+    i
+      ? ({ ...i, src: map(i.src), ...(i.thumb ? { thumb: map(i.thumb) } : {}), ...(i.motion ? { motion: { ...i.motion, src: map(i.motion.src) } } : {}) } as T)
+      : i;
   return {
     ...doc,
     cover: { ...doc.cover, image: img(doc.cover.image) },

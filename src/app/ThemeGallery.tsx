@@ -4,7 +4,7 @@ import { QuietButton, QuietLink } from '../components/ui/QuietButton';
 import { createBook, spreadsFromImages } from '../data/bookOps';
 import type { BookDoc } from '../data/schema';
 import { useFontsReady } from '../hooks/useFontsReady';
-import { IMAGE_ACCEPT, importImages, importLabel, isImageFile } from '../storage/assets';
+import { MEDIA_ACCEPT, importImages, importLabel, isMediaFile } from '../storage/assets';
 import { explainStorageError, requestPersist } from '../storage/quota';
 import { Toast, type ToastState } from '../components/ui/Toast';
 import { failedNote, setNote } from './notes';
@@ -40,7 +40,7 @@ export function ThemeGallery() {
     if (!picked) return;
     const book = createBook(picked.id);
     book.paletteId = palette;
-    const images = files.filter(isImageFile);
+    const images = files.filter(isMediaFile);
     void requestPersist();
     try {
       if (images.length) {
@@ -49,7 +49,7 @@ export function ThemeGallery() {
         book.spreads = spreadsFromImages(batch.images, picked.id);
         const first = batch.images[0];
         if (first) book.cover.image = { src: first.src, thumb: first.thumb, alt: '封面' };
-        if (batch.failed.length) setNote(failedNote(batch.failed));
+        if (batch.failed.length) setNote(failedNote(batch.failed, batch.reasons));
       }
       await putBook(book);
       go(href.edit(book.id));
@@ -138,7 +138,7 @@ export function ThemeGallery() {
               </div>
               <div className={styles.actions}>
                 <label className={styles.primary}>
-                  <input type="file" accept={IMAGE_ACCEPT} multiple className="visually-hidden" onChange={(e) => void start([...(e.target.files ?? [])])} />
+                  <input type="file" accept={MEDIA_ACCEPT} multiple className="visually-hidden" onChange={(e) => void start([...(e.target.files ?? [])])} />
                   选择照片，开始做书
                 </label>
                 <QuietButton onClick={() => void start([])}>先空着开始</QuietButton>

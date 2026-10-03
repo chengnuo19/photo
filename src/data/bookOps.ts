@@ -63,7 +63,13 @@ const GAP = 2 * 60 * 60 * 1000;
 export function spreadsFromImages(images: ImportedImage[], themeId: ThemeId = 'storybook'): Spread[] {
   const mood = MOOD[themeId] ?? 'default';
   const sorted = [...images].sort((a, b) => (a.takenAt?.getTime() ?? Infinity) - (b.takenAt?.getTime() ?? Infinity));
-  const toImage = (i: ImportedImage): BookImage => ({ src: i.src, thumb: i.thumb, alt: i.name.replace(/\.[^.]+$/, ''), focal: { x: 0.5, y: 0.5 } });
+  const toImage = (i: ImportedImage): BookImage => ({
+    src: i.src,
+    thumb: i.thumb,
+    alt: i.name.replace(/\.[^.]+$/, ''),
+    focal: { x: 0.5, y: 0.5 },
+    ...(i.motion ? { motion: i.motion } : {}),
+  });
   const stamp = (i: ImportedImage) => (i.takenAt ? { date: fmtStampDate(i.takenAt) } : undefined);
   const isLand = (i: ImportedImage) => i.width / i.height >= 1.15;
 

@@ -90,9 +90,10 @@ export function PageStrip({ doc, resolved, built, current, onJump, onMove, onAdd
             <span className={s.label}>{isStory ? '空白' : LABEL[v.kind]}</span>
           )}
           {!single && <i className={s.gutter} aria-hidden />}
-          {sp?.voice && (
+          {(sp?.voice || sp?.images.some((i) => i.motion)) && (
             <i className={s.voice} aria-hidden>
-              ♪
+              {sp.images.some((i) => i.motion) ? '▶' : ''}
+              {sp.voice ? '♪' : ''}
             </i>
           )}
         </button>

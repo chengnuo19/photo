@@ -1,6 +1,6 @@
 import { useRef, useState, type ElementType, type PointerEvent as RPointerEvent } from 'react';
 import type { BookImage, Focal } from '../../data/schema';
-import type { ImportedImage } from '../../storage/assets';
+import { isMediaFile, type ImportedImage } from '../../storage/assets';
 import { PageImage } from '../Book/PageImage';
 import { useEdit } from './EditContext';
 import s from './Editable.module.css';
@@ -74,7 +74,7 @@ export function ImageSlot({ image, half, decorative, onChange, emptyLabel = '放
 
   const replaceWith = (im: ImportedImage | null) => {
     if (!im) return;
-    onChange({ src: im.src, thumb: im.thumb, alt: image?.alt || im.name.replace(/\.[^.]+$/, ''), focal: { x: 0.5, y: 0.5 } });
+    onChange({ src: im.src, thumb: im.thumb, alt: image?.alt || im.name.replace(/\.[^.]+$/, ''), focal: { x: 0.5, y: 0.5 }, ...(im.motion ? { motion: im.motion } : {}) });
   };
 
   const onPointerDown = (e: RPointerEvent<HTMLDivElement>) => {
@@ -116,7 +116,7 @@ export function ImageSlot({ image, half, decorative, onChange, emptyLabel = '放
       }}
       onDragLeave={() => setOver(false)}
       onDrop={async (e) => {
-        const f = [...e.dataTransfer.files].find((x) => x.type.startsWith('image/'));
+        const f = [...e.dataTransfer.files].find(isMediaFile);
         setOver(false);
         if (!f) return;
         e.preventDefault();
@@ -136,6 +136,11 @@ export function ImageSlot({ image, half, decorative, onChange, emptyLabel = '放
           <button type="button" onClick={async () => replaceWith(await edit.pickImage())}>
             换一张
           </button>
+          {image.motion && (
+            <button type="button" onClick={() => onChange({ ...image, motion: undefined })} title="只留下这一帧静止的画面">
+              不要动
+            </button>
+          )}
           <span className={s.hint}>拖动图片调整取景</span>
         </div>
       )}
