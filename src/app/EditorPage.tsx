@@ -93,8 +93,11 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
   // ---- autosave
   const [saved, setSaved] = useState<'saved' | 'saving' | 'failed'>('saved');
   const [saveError, setSaveError] = useState<string | null>(null);
+  // The book as opened: nothing to save until it changes. (Not the `initial` prop — the
+  // parent is handed every change and passes it back down as `initial`.)
+  const opened = useRef(initial);
   useEffect(() => {
-    if (doc === initial) return;
+    if (doc === opened.current) return;
     setSaved('saving');
     const t = window.setTimeout(() => {
       putBook(doc).then(
@@ -109,7 +112,7 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
       );
     }, 450);
     return () => window.clearTimeout(t);
-  }, [doc, initial]);
+  }, [doc]);
 
   // Leaving with unsaved changes: the browser asks first.
   useEffect(() => {
