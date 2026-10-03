@@ -29,13 +29,17 @@ npm run dev
 
 ## 使用
 
-1. **书架**：点"新建一本"选择照片（或直接把照片拖进窗口）。照片按拍摄时间排序：横图做成整幅跨页，竖图两两并排，拍摄日期自动写进印章。
+1. **书架**：点"新建一本"选择照片（或直接把照片拖进窗口；iPhone 的 HEIC 照片也可以，第一次用到时会下载约 750 KB 的解码器）。照片按拍摄时间排序：横图做成整幅跨页，竖图两两并排，拍摄日期自动写进印章。
 2. **编辑**：点书上的任何文字直接修改；拖动图片调整取景，悬停可"换一张"；下方小图条点击跳页、拖动排序、"+"加照片；右上角切换主题 / 配色 / 照片滤镜、加音乐、开关音效、撤销（Ctrl+Z）。所有改动自动保存在这台设备的浏览器里（IndexedDB）。
 3. **预览**：和读者看到的一模一样。
 4. **导出**：右上角"导出"。可以开关拆封仪式、填写"送给 / 来自"、选照片画质；也可以录翻书视频、拼长图，或备份这本书。
+   - 翻书视频 / 长图有两种做法：电脑版 Chrome / Edge 默认**录屏**（共享此标签页，画面和书里完全一样）；手机和其他浏览器用**直接生成**（把每一页画成图片、在画布上翻页、编码成 MP4，不用共享屏幕，可选竖屏 9:16 / 横屏 16:9，带音乐和翻页声）。电脑上也可以点"直接生成"。
+   - 手机上做好后可以"保存 / 分享"（系统分享面板，能直接存到相册或发给微信好友）；微信内置浏览器不能保存文件，要先"在浏览器打开"。
 5. **备份**：书架上每本书下面的"备份"，或导出菜单里的"备份这本书"。书只存在这个浏览器里，换设备、清理浏览器之前请先备份。
 
 阅读时：点右页 / → / 空格 下一页，点左页 / ← 上一页，拖动页角翻页，手机上左右滑或轻点。
+
+**离线**：线上版带 Service Worker（`src/sw/service-worker.js`，构建时由 `scripts/vite-sw.mjs` 生成 `dist/sw.js`）。第一次打开后，程序本身会在后台存到本机，看过的字体和图片也会留下；之后再打开几乎是秒开，断网也能看书和编辑。手机上可以"添加到主屏幕"。发布新版本后，联网时打开会自动用新版（网络 3 秒没响应就先用本机的旧版）。
 
 ## 部署
 
@@ -67,9 +71,11 @@ src/
   data/           schema（书的数据结构）、buildPages（逻辑跨页 → 物理页）、bookOps、sampleBook
   hooks/          useBookMachine（closed/opening/reading/flipping/closing/ended 状态机）等
   storage/        IndexedDB、图片导入（压缩为 WebP、读取 EXIF）、持久存储与空间（quota）、备份恢复（backup）
-  export/         导出 zip / 单 html、分享封面图（shareCard）、录制长图和视频（capture）
+  export/         导出 zip / 单 html、分享封面图（shareCard）、录屏做长图和视频（capture）、字体片段挑选（fontSlices）
+    film/         不用录屏的视频 / 长图：press（离屏排版每一页）、renderer（画布上翻页，复用引擎的 FlipCalculation）、film（时间线、配音、WebCodecs 编码）
+  sw/             Service Worker（离线与缓存）
   vendor/page-flip/  StPageFlip 2.0.7（MIT）源码，本地修改处标注 "MB:"
-scripts/          示例插画生成、Playwright 截图与端到端测试
+scripts/          示例插画生成、Playwright 截图与端到端测试、主屏幕图标（make-icons）、Service Worker 构建插件（vite-sw）
 ```
 
 ### 为什么把 page-flip 放进 vendor
@@ -126,6 +132,18 @@ node scripts/record-check.mjs <输出目录> [书id] [image|video|both]
 node scripts/flaky-images.mjs <输出目录> [书id] [失败次数]
 ```
 
-`flaky-images` 让每张照片的前几次请求都断网失败，检查照片最终都能自动重试加载出来。`e2e-safety` 检查导入进度与读不了的文件、存储提示、备份 → 删除 → 恢复、续读；`record-check` 用 Chrome 的 `--auto-accept-this-tab-capture` 无人值守地录一次长图 / 视频。所有脚本都可以用环境变量 `BASE` 指向别的端口。
+```bash
+node scripts/film-check.mjs <输出目录> [书id] [--phone] [--only=portrait|landscape|image]
+```
+
+```bash
+node scripts/heic-check.mjs <输出目录> <照片.heic> [更多文件…]
+```
+
+```bash
+node scripts/offline-check.mjs <输出目录> [书id]
+```
+
+`flaky-images` 让每张照片的前几次请求都断网失败，检查照片最终都能自动重试加载出来。`e2e-safety` 检查导入进度与读不了的文件、存储提示、备份 → 删除 → 恢复、续读；`record-check` 用 Chrome 的 `--auto-accept-this-tab-capture` 无人值守地录一次长图 / 视频。`film-check` 用"直接生成"做竖屏、横屏视频和长图，用 ffprobe 检查 MP4（分辨率、时长、音轨），再用 ffmpeg 抽帧拼成联系表方便目视检查（`--phone` 模拟手机）。`heic-check` 导入 HEIC（其中一张不带 MIME 类型，模拟 Windows 上的 iPhone 照片），检查存进去的尺寸；测试用 HEIC 可以用 pillow-heif 生成。`offline-check` 以 `/photo/` 构建并启动预览，访问一次后**关掉服务器**，检查书架、样书（含照片）和主题库都还能打开。所有脚本都可以用环境变量 `BASE` 指向别的端口。
 
 截图脚本使用本机安装的 Chrome（playwright-core，不额外下载浏览器）。

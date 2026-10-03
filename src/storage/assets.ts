@@ -62,7 +62,7 @@ async function encode(bitmap: ImageBitmap, maxEdge: number, quality: number): Pr
 export async function importImage(file: File): Promise<ImportedImage> {
   let bitmap: ImageBitmap, blob: Blob, thumb: Blob, takenAt: Date | undefined;
   try {
-    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    bitmap = await decodeImage(file);
     [blob, thumb, takenAt] = await Promise.all([encode(bitmap, MAX_EDGE, 0.86), encode(bitmap, THUMB_EDGE, 0.8), readTakenAt(file)]);
   } catch {
     throw new ImageDecodeError(file.name);
@@ -84,7 +84,45 @@ export async function importImage(file: File): Promise<ImportedImage> {
   return { src: assetRef(asset.id), thumb: thumbRef(asset.id), width: asset.width!, height: asset.height!, takenAt, name: file.name };
 }
 
-/** The file is not an image this browser can read (HEIC in Chrome, a broken file…). */
+/** File pickers: iPhone photos (.heic) often carry no MIME type on Windows and would be hidden by `image/*` alone. */
+export const IMAGE_ACCEPT = 'image/*,.heic,.heif';
+
+/** Files worth trying to import as pictures (dropped or picked). */
+export const isImageFile = (f: File) => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name);
+
+async function decodeImage(file: File): Promise<ImageBitmap> {
+  try {
+    return await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch (err) {
+    // Safari reads HEIC itself; Chrome, Edge and Firefox need the converter
+    if (!(await isHeif(file))) throw err;
+    return decodeHeif(file);
+  }
+}
+
+/** HEIF / HEIC by its `ftyp` brand (the extension or MIME type is often missing or wrong). */
+async function isHeif(file: Blob) {
+  const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const box = String.fromCharCode(...head.slice(4, 8));
+  const brand = String.fromCharCode(...head.slice(8, 12));
+  return box === 'ftyp' && ['heic', 'heix', 'heim', 'heis', 'hevc', 'hevx', 'mif1', 'msf1'].includes(brand);
+}
+
+// One HEIC at a time: the decoder is large and a phone's memory is not.
+let heifQueue: Promise<unknown> = Promise.resolve();
+
+/** Decode HEIC with libheif (≈1 MB, downloaded the first time someone adds an iPhone photo). */
+function decodeHeif(file: Blob): Promise<ImageBitmap> {
+  const run = heifQueue.then(async () => {
+    const { heicTo } = await import('heic-to');
+    // libheif applies the photo's rotation itself
+    return heicTo({ blob: file, type: 'bitmap' });
+  });
+  heifQueue = run.catch(() => undefined);
+  return run;
+}
+
+/** The file is not an image this browser can read (a broken file, RAW…). */
 export class ImageDecodeError extends Error {
   constructor(name: string) {
     super(`无法读取图片：${name}`);
@@ -94,7 +132,7 @@ export class ImageDecodeError extends Error {
 
 export interface ImportBatch {
   images: ImportedImage[];
-  /** Names of files that could not be read (e.g. HEIC in browsers without HEIC support). */
+  /** Names of files that could not be read (broken files, formats no browser reads). */
   failed: string[];
   /** Set when storage itself failed (quota, private mode) — the batch stops there. */
   error?: unknown;

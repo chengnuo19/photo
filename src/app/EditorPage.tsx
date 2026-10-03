@@ -14,7 +14,7 @@ import { fontsOf, getTheme, listThemes, themeStyle, useThemes } from '../themes'
 import { download, exportBook, type ExportKind, type ExportQuality } from '../export/exportBook';
 import { fontSample, useFontsReady } from '../hooks/useFontsReady';
 import { isSampleId, useLoadedBook } from '../hooks/useLoadedBook';
-import { ImageDecodeError, importAudio, importImage, importImages, importLabel, resolveBook } from '../storage/assets';
+import { IMAGE_ACCEPT, ImageDecodeError, importAudio, importImage, importImages, importLabel, isImageFile, resolveBook } from '../storage/assets';
 import { backupBooks } from '../storage/backup';
 import { putBook } from '../storage/db';
 import { explainStorageError, fmtBytes, isLow, requestPersist, storageInfo } from '../storage/quota';
@@ -176,7 +176,7 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
       update,
       importFile,
       pickImage: async () => {
-        const [f] = await openPicker('image/*', false);
+        const [f] = await openPicker(IMAGE_ACCEPT, false);
         return f ? importFile(f) : null;
       },
     }),
@@ -192,7 +192,7 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
 
   const addImages = useCallback(
     async (files: File[]) => {
-      const images = files.filter((f) => f.type.startsWith('image/'));
+      const images = files.filter(isImageFile);
       if (!images.length) return;
       void requestPersist();
       const batch = await importImages(images, (done, total) => setToast({ text: importLabel(done, total), progress: done / total }));
@@ -540,7 +540,7 @@ function Editor({ initial, onDocChange }: { initial: BookDoc; onDocChange: (d: B
           current={view.idx}
           onJump={(v) => bookRef.current?.goToView(v)}
           onMove={(from, to) => update((d) => moveSpread(d, from, to))}
-          onAdd={() => void openPicker('image/*', true).then(addImages)}
+          onAdd={() => void openPicker(IMAGE_ACCEPT, true).then(addImages)}
         />
 
         <input

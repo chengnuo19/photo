@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Book, type BookHandle } from '../components/Book/Book';
 import { MusicToggle, useBookMusic } from '../components/Music/Music';
 import { Scene } from '../components/Scene/Scene';
 import { QuietButton, QuietLink } from '../components/ui/QuietButton';
 import { Unwrap } from '../components/Unwrap/Unwrap';
+import { buildPages } from '../data/buildPages';
 import type { BookDoc } from '../data/schema';
 import {
   captureSupport,
@@ -20,6 +21,9 @@ import {
   type Segment,
 } from '../export/capture';
 import { download } from '../export/exportBook';
+import { FilmCancelled, filmSeconds, makeFilm, makeLongImage } from '../export/film/film';
+import { PagePress, type PressHandle } from '../export/film/press';
+import { geometryFor, type FilmFormat } from '../export/film/renderer';
 import { fontSample, useFontsReady } from '../hooks/useFontsReady';
 import { isSampleId, useLoadedBook } from '../hooks/useLoadedBook';
 import { fmtBytes } from '../storage/quota';
@@ -47,7 +51,17 @@ export function RecordPage({ id, mode }: { id: string; mode: RecordMode }) {
   return <Recorder book={resolved} mode={mode} backHref={back} />;
 }
 
-type Stage = { name: 'intro' } | { name: 'running'; note: string } | { name: 'done'; text: string } | { name: 'error'; text: string };
+type Stage =
+  | { name: 'intro' }
+  | { name: 'running'; note: string; progress?: number }
+  | { name: 'done'; text: string; file?: { blob: Blob; filename: string } }
+  | { name: 'error'; text: string };
+
+/** Screen capture (desktop Chrome / Edge, pixel-exact) or pictures drawn on a canvas (everywhere). */
+type Method = 'capture' | 'draw';
+
+const inWeChat = () => /MicroMessenger/i.test(navigator.userAgent);
+const phoneLike = () => window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(pointer: fine)').matches;
 
 function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; backHref: string }) {
   const theme = getTheme(book.themeId);
@@ -62,6 +76,16 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
   const unwrapped = useRef<() => void>(() => undefined);
   const support = captureSupport();
   const video = mode === 'video';
+  const [method, setMethod] = useState<Method>(support.ok ? 'capture' : 'draw');
+  const [format, setFormat] = useState<FilmFormat>(() => (window.innerWidth < window.innerHeight ? 'portrait' : 'landscape'));
+  // the long picture is always made of open spreads
+  const pressFormat: FilmFormat = video ? format : 'landscape';
+  const geo = useMemo(() => geometryFor(pressFormat), [pressFormat]);
+  const built = useMemo(() => buildPages(book, geo.landscape ? 'landscape' : 'portrait'), [book, geo]);
+  const pressRef = useRef<PressHandle>(null);
+  const [pressing, setPressing] = useState(false);
+  const abort = useRef<AbortController | null>(null);
+  useEffect(() => () => abort.current?.abort(), []);
 
   const phase = () => roomRef.current?.querySelector('[data-phase]')?.getAttribute('data-phase') ?? '';
   const atRest = () => ['closed', 'reading', 'ended'].includes(phase());
@@ -69,6 +93,46 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
   const views = () => bookRef.current?.viewCount() ?? 0;
   // cover, dedication, letter, closing words, back cover + the spreads
   const seconds = Math.round((wrapped ? 5 : 2) + ((book.spreads.length + 5) * (DWELL_MS + 1000)) / 1000 + 3);
+  const drawnSeconds = filmSeconds(built);
+
+  /** Make the video or long picture from page pictures (no screen sharing). */
+  const draw = async () => {
+    const ac = new AbortController();
+    abort.current = ac;
+    setStage({ name: 'running', note: '正在准备页面…', progress: 0 });
+    setPressing(true);
+    try {
+      // let the hidden pages lay out, load their photos and fonts
+      await wait(80);
+      await until(() => !!pressRef.current?.root(), 4000);
+      await document.fonts.ready;
+      await wait(500);
+      const onProgress = (note: string, progress?: number) => setStage({ name: 'running', note, progress });
+      const common = { book, built, press: pressRef.current!, onProgress, signal: ac.signal };
+      let file: { blob: Blob; filename: string };
+      let text: string;
+      if (video) {
+        const scene = roomRef.current?.querySelector<HTMLElement>('[data-scene]') ?? null;
+        const film = await makeFilm({ ...common, format, scene, sound: book.sound.flip });
+        file = { blob: film.blob, filename: `${safe(book.meta.title)}-翻书视频.${film.mp4 ? 'mp4' : 'webm'}` };
+        text = film.mp4
+          ? `视频做好了（${fmtBytes(film.blob.size)}${film.audio ? '' : '，没有声音'}）。`
+          : `视频做好了，是 .webm 格式（${fmtBytes(film.blob.size)}）。微信可能不能直接播放，可以先用剪映等工具转成 MP4。`;
+      } else {
+        const blob = await makeLongImage(common, `《${book.meta.title || '无题'}》 · 回忆绘本`);
+        file = { blob, filename: `${safe(book.meta.title)}-长图.jpg` };
+        text = `长图做好了（${fmtBytes(blob.size)}），可以发到微信或朋友圈。`;
+      }
+      if (!phoneLike()) download(file);
+      setStage({ name: 'done', text: phoneLike() ? text : `${text}已开始下载。`, file });
+    } catch (err) {
+      if (err instanceof FilmCancelled) setStage({ name: 'intro' });
+      else setStage({ name: 'error', text: `没能做好：${(err as Error).message}` });
+    } finally {
+      setPressing(false);
+      abort.current = null;
+    }
+  };
 
   const run = async () => {
     if (!roomRef.current) return;
@@ -158,13 +222,15 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
   };
 
   const running = stage.name === 'running';
+  // screen capture records this page: nothing on screen while it runs
+  const capturing = running && method === 'capture';
   return (
     <main
       ref={roomRef}
       className={`${app.room} ${theme.className} ${styles.room}`}
       style={themeStyle(book)}
       data-ready={ready || undefined}
-      data-running={running || undefined}
+      data-running={capturing || undefined}
     >
       <Scene theme={theme} mode="read" sound={book.sound.flip} />
       {sealed && (
@@ -184,8 +250,11 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
         <Book book={book} onOpen={music.start} handle={bookRef} recording />
       </div>
       {music.available && !running && <MusicToggle playing={music.playing} onToggle={music.toggle} />}
+      {pressing && (
+        <PagePress book={book} built={built} W={geo.W} H={geo.H} captionWidth={Math.min(720, (geo.landscape ? geo.W * 2 : geo.W) * 0.88)} handle={pressRef} />
+      )}
 
-      {running ? (
+      {capturing ? (
         // the video records this page too: say nothing on screen (the browser's sharing bar shows it is recording)
         <p className={video ? 'visually-hidden' : styles.live} aria-live="polite">
           {stage.note}
@@ -194,39 +263,81 @@ function Recorder({ book, mode, backHref }: { book: BookDoc; mode: RecordMode; b
         <div className={styles.scrim}>
           <section className={styles.panel} role="dialog" aria-labelledby="rec-title">
             <h1 id="rec-title">{video ? '翻书视频' : '长图'}</h1>
-            {stage.name === 'intro' &&
-              (support.ok ? (
-                <>
-                  <p>
-                    {video
-                      ? `自动${wrapped ? '拆开礼物、' : ''}翻完整本书，保存成${pickVideoMime().startsWith('video/mp4') ? ' MP4 ' : ''}视频，可以直接发微信或朋友圈。大约 ${seconds} 秒。`
-                      : '把封面和每一页拍下来，拼成一张长图，适合发微信和朋友圈。'}
-                  </p>
-                  <ol>
-                    <li>点“开始”，浏览器会问要共享哪个画面：选择<b>此标签页</b>{video && <>，并打开<b>分享标签页音频</b>（这样音乐和翻页声也会录进去）</>}。</li>
-                    <li>录制时请不要切换标签页或改变窗口大小。</li>
-                    <li>结束后文件会自动下载。</li>
-                  </ol>
-                  <p className={styles.actions}>
-                    <QuietButton className={styles.primary} onClick={() => void run()}>
-                      开始
+            {stage.name === 'intro' && method === 'capture' && support.ok && (
+              <>
+                <p>
+                  {video
+                    ? `自动${wrapped ? '拆开礼物、' : ''}翻完整本书，保存成${pickVideoMime().startsWith('video/mp4') ? ' MP4 ' : ''}视频，可以直接发微信或朋友圈。大约 ${seconds} 秒。`
+                    : '把封面和每一页拍下来，拼成一张长图，适合发微信和朋友圈。'}
+                </p>
+                <ol>
+                  <li>点“开始”，浏览器会问要共享哪个画面：选择<b>此标签页</b>{video && <>，并打开<b>分享标签页音频</b>（这样音乐和翻页声也会录进去）</>}。</li>
+                  <li>录制时请不要切换标签页或改变窗口大小。</li>
+                  <li>结束后文件会自动下载。</li>
+                </ol>
+                <p className={styles.actions}>
+                  <QuietButton className={styles.primary} onClick={() => void run()}>
+                    开始
+                  </QuietButton>
+                  <QuietLink href={backHref}>返回</QuietLink>
+                </p>
+                <p className={styles.aside}>
+                  不想共享屏幕？
+                  <QuietButton onClick={() => setMethod('draw')}>{video ? '直接生成（可选竖屏）' : '直接生成'}</QuietButton>
+                </p>
+              </>
+            )}
+            {stage.name === 'intro' && method === 'draw' && (
+              <>
+                <p>
+                  {video
+                    ? `自动翻完整本书，直接生成 MP4 视频${book.music?.src || book.sound.flip ? '（带音乐和翻页声）' : ''}，大约 ${drawnSeconds} 秒。不用共享屏幕，手机上也能做。`
+                    : '把封面和每一页拼成一张长图，适合发微信和朋友圈。不用共享屏幕，手机上也能做。'}
+                </p>
+                {video && (
+                  <div className={styles.formats} role="radiogroup" aria-label="画面方向">
+                    <QuietButton role="radio" aria-checked={format === 'portrait'} active={format === 'portrait'} onClick={() => setFormat('portrait')}>
+                      竖屏 9:16
+                      <small>适合手机、视频号</small>
                     </QuietButton>
-                    <QuietLink href={backHref}>返回</QuietLink>
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p>{support.reason}</p>
-                  <p className={styles.actions}>
-                    <QuietLink href={backHref}>返回</QuietLink>
-                  </p>
-                </>
-              ))}
+                    <QuietButton role="radio" aria-checked={format === 'landscape'} active={format === 'landscape'} onClick={() => setFormat('landscape')}>
+                      横屏 16:9
+                      <small>两页摊开一起看</small>
+                    </QuietButton>
+                  </div>
+                )}
+                {inWeChat() && <p data-tone="warn">在微信里不能保存文件：请点右上角「···」，选「在浏览器打开」后再生成。</p>}
+                <p className={styles.actions}>
+                  <QuietButton className={styles.primary} onClick={() => void draw()}>
+                    开始生成
+                  </QuietButton>
+                  <QuietLink href={backHref}>返回</QuietLink>
+                </p>
+                <p className={styles.aside}>
+                  画面由每一页的图片重新绘制，个别动态效果会和书里不一样。
+                  {support.ok && <QuietButton onClick={() => setMethod('capture')}>改用录屏</QuietButton>}
+                </p>
+              </>
+            )}
+            {stage.name === 'running' && (
+              <>
+                <p aria-live="polite">{stage.note}</p>
+                <div className={styles.bar} role="progressbar" aria-label="进度" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((stage.progress ?? 0) * 100)}>
+                  <i style={{ width: `${Math.round((stage.progress ?? 0) * 100)}%` }} />
+                </div>
+                <p className={styles.aside}>生成时请停留在这个页面。</p>
+                <p className={styles.actions}>
+                  <QuietButton onClick={() => abort.current?.abort()}>取消</QuietButton>
+                </p>
+              </>
+            )}
             {(stage.name === 'done' || stage.name === 'error') && (
               <>
+                {stage.name === 'done' && stage.file && <Preview file={stage.file} />}
                 <p data-tone={stage.name === 'error' ? 'warn' : undefined}>{stage.text}</p>
+                {stage.name === 'done' && stage.file && <SaveButtons file={stage.file} />}
                 <p className={styles.actions}>
-                  <QuietButton onClick={again}>{stage.name === 'error' ? '再试一次' : '再录一次'}</QuietButton>
+                  <QuietButton onClick={again}>{stage.name === 'error' ? '再试一次' : video ? '再录一次' : '再做一次'}</QuietButton>
                   <QuietLink href={backHref}>返回</QuietLink>
                 </p>
               </>
@@ -262,6 +373,46 @@ function cropRect(room: HTMLElement, closed: boolean): DOMRect {
 async function imagesReady(room: HTMLElement) {
   const imgs = [...room.querySelectorAll<HTMLImageElement>('[aria-roledescription="book"] img')];
   await Promise.all(imgs.map((im) => (im.complete ? Promise.resolve() : im.decode().catch(() => undefined))));
+}
+
+/** What was made, to look at before saving. */
+function Preview({ file }: { file: { blob: Blob; filename: string } }) {
+  const [url, setUrl] = useState<string>();
+  useEffect(() => {
+    const u = URL.createObjectURL(file.blob);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
+  if (!url) return null;
+  return file.blob.type.startsWith('video/') ? (
+    <video className={styles.preview} src={url} controls playsInline preload="metadata" />
+  ) : (
+    <img className={styles.preview} src={url} alt="长图预览" />
+  );
+}
+
+/** Save: the phone's share sheet (存储视频, 发给微信好友…) where there is one, and a plain download. */
+function SaveButtons({ file }: { file: { blob: Blob; filename: string } }) {
+  const shareable = useMemo(() => {
+    try {
+      const f = new File([file.blob], file.filename, { type: file.blob.type });
+      return navigator.canShare?.({ files: [f] }) ? f : null;
+    } catch {
+      return null;
+    }
+  }, [file]);
+  return (
+    <p className={styles.actions}>
+      {shareable && (
+        <QuietButton className={styles.primary} onClick={() => void navigator.share({ files: [shareable] }).catch(() => undefined)}>
+          保存 / 分享
+        </QuietButton>
+      )}
+      <QuietButton className={shareable ? undefined : styles.primary} onClick={() => download(file)}>
+        下载文件
+      </QuietButton>
+    </p>
+  );
 }
 
 const safe = (s: string) => (s || '无题').replace(/[\\/:*?"<>|\s]+/g, '').slice(0, 40) || '无题';

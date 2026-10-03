@@ -24,5 +24,5 @@ export function takeNote(): string | null {
 
 export function failedNote(names: string[]) {
   const list = names.slice(0, 3).join('、') + (names.length > 3 ? '…' : '');
-  return `有 ${names.length} 张没能读取（${list}），可能是 HEIC 等浏览器不支持的格式，可以先转成 JPG 再添加。`;
+  return `有 ${names.length} 张没能读取（${list}），可能是文件损坏或浏览器不支持的格式（如相机 RAW），可以先转成 JPG 再添加。`;
 }

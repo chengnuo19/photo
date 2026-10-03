@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react';
 import { buildPages, viewPreviewImage, type BuiltBook, type PageSpec } from '../../data/buildPages';
 import type { BookDoc } from '../../data/schema';
 import { acceptsInput, useBookMachine } from '../../hooks/useBookMachine';
@@ -8,6 +8,7 @@ import { usePreload } from '../../hooks/usePreload';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { activeDecor, getTheme, themeStyle } from '../../themes';
 import { ThemeContext } from '../../themes/context';
+import type { Theme } from '../../themes/types';
 import { Caption } from '../Caption/Caption';
 import { useEdit } from '../Editor/EditContext';
 import { PhotoPreview } from '../PhotoPreview/PhotoPreview';
@@ -224,31 +225,7 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen, resumeVi
 
   /* ---------------------------------------------------------------- render */
   const palette = useMemo(() => themeStyle(book), [book]);
-  const renderPage = useCallback(
-    (p: PageSpec) => {
-      const Page = theme.pages[p.kind];
-      const pf = theme.photoFilter;
-      const fx = pf && book.photoFilter !== false && p.spread?.overrides?.filter !== false ? pf : undefined;
-      return (
-        <ThemeContext.Provider value={theme}>
-          <div
-            className={`${styles.page} ${theme.className}`}
-            data-side={p.side}
-            data-hard={p.hard || undefined}
-            data-decor={p.spread ? activeDecor(theme, p.spread)?.id : undefined}
-            data-fx={fx ? fx.overlay ?? 'none' : undefined}
-            style={fx ? { ...palette, ['--mb-filter' as string]: fx.css } : palette}
-          >
-            <Page book={book} page={p} />
-            {p.spread && <DecorLayer page={p} />}
-            {p.spread && <StickerLayer page={p} />}
-            {!p.hard && <div className={styles.gutter} aria-hidden />}
-          </div>
-        </ThemeContext.Provider>
-      );
-    },
-    [book, theme, palette],
-  );
+  const renderPage = useCallback((p: PageSpec) => <PageFace book={book} page={p} theme={theme} palette={palette} />, [book, theme, palette]);
 
   const reading = m.phase === 'reading';
   const storySpread = view?.kind === 'story' ? view.spread : undefined;
@@ -349,6 +326,33 @@ export function Book({ book, reserveBottom = 0, handle, onView, onOpen, resumeVi
         {statusText(m.phase, view?.kind, view?.spread?.caption)}
       </p>
     </div>
+  );
+}
+
+/**
+ * One physical page as the reader sees it (without the flip engine around it). The video
+ * recorder draws the same pages, so they look the same in the book and in the film.
+ */
+export function PageFace({ book, page: p, theme, palette }: { book: BookDoc; page: PageSpec; theme: Theme; palette: CSSProperties }) {
+  const Page = theme.pages[p.kind];
+  const pf = theme.photoFilter;
+  const fx = pf && book.photoFilter !== false && p.spread?.overrides?.filter !== false ? pf : undefined;
+  return (
+    <ThemeContext.Provider value={theme}>
+      <div
+        className={`${styles.page} ${theme.className}`}
+        data-side={p.side}
+        data-hard={p.hard || undefined}
+        data-decor={p.spread ? activeDecor(theme, p.spread)?.id : undefined}
+        data-fx={fx ? fx.overlay ?? 'none' : undefined}
+        style={fx ? { ...palette, ['--mb-filter' as string]: fx.css } : palette}
+      >
+        <Page book={book} page={p} />
+        {p.spread && <DecorLayer page={p} />}
+        {p.spread && <StickerLayer page={p} />}
+        {!p.hard && <div className={styles.gutter} aria-hidden />}
+      </div>
+    </ThemeContext.Provider>
   );
 }
 

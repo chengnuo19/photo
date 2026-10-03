@@ -7,7 +7,7 @@ import { sampleBook } from '../data/sampleBook';
 import type { BookDoc } from '../data/schema';
 import { useFontsReady } from '../hooks/useFontsReady';
 import { download } from '../export/exportBook';
-import { importImages, importLabel, loadAssets, resolveBook } from '../storage/assets';
+import { importImages, importLabel, isImageFile, loadAssets, resolveBook } from '../storage/assets';
 import { backupBooks, restoreBackup } from '../storage/backup';
 import { deleteBook, listBooks, putBook } from '../storage/db';
 import { explainStorageError, fmtBytes, isLow, requestPersist, storageInfo, type StorageInfo } from '../storage/quota';
@@ -56,7 +56,7 @@ export function ShelfPage() {
 
   const createFrom = async (files: File[]) => {
     if (files.some(isBackup)) return restore(files.filter(isBackup));
-    const images = files.filter((f) => f.type.startsWith('image/'));
+    const images = files.filter(isImageFile);
     const book = createBook();
     void requestPersist();
     try {

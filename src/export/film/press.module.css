@@ -1,0 +1,31 @@
+/* Laid out and painted (so photos load and fonts apply) but never seen. */
+.press {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sheet {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+}
+
+/* the caption line, in normal flow (under the book it is placed with left: 50% + translate,
+   which would carry into its picture) */
+.line {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.line [data-mb-caption] {
+  position: static !important;
+  transform: none !important;
+  transition: none !important;
+  width: 100% !important;
+}

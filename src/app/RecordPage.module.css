@@ -82,3 +82,70 @@
   color: var(--room-ink);
   opacity: 0.55;
 }
+
+/* a quieter second choice under the main actions */
+.aside {
+  margin: 10px 0 0 !important;
+  font-size: 12.5px;
+  color: #7a6a58;
+}
+
+.aside button {
+  margin-left: 4px;
+  font-size: 12.5px !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.formats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 4px 0 14px;
+}
+
+.formats button {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px !important;
+  border: 1px solid rgba(74, 61, 48, 0.2) !important;
+  text-align: left;
+  font-size: 14px !important;
+}
+
+.formats button[data-active] {
+  border-color: currentColor !important;
+  color: #3a2e22;
+  background: rgba(74, 61, 48, 0.05);
+}
+
+.formats small {
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: #8a7a66;
+}
+
+.bar {
+  height: 3px;
+  margin: 2px 0 14px;
+  background: rgba(74, 61, 48, 0.12);
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  background: #7d5d3f;
+  transition: width 300ms linear;
+}
+
+.preview {
+  display: block;
+  width: 100%;
+  max-height: 46vh;
+  margin: 0 0 12px;
+  object-fit: contain;
+  background: rgba(74, 61, 48, 0.06);
+}

@@ -70,7 +70,7 @@ export function Scene({ theme, mode, sound }: { theme: Theme; mode: 'read' | 'ed
   const C = theme.scene;
   if (!C) return null;
   return (
-    <div ref={ref} className={s.scene} data-mode={mode} data-portrait={portrait || undefined} data-reduced={reduced || undefined} aria-hidden={mode === 'edit' || undefined}>
+    <div ref={ref} className={s.scene} data-scene data-mode={mode} data-portrait={portrait || undefined} data-reduced={reduced || undefined} aria-hidden={mode === 'edit' || undefined}>
       <Ctx.Provider value={{ theme, sound, mode }}>
         <C mode={mode} sound={sound} />
       </Ctx.Provider>

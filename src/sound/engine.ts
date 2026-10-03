@@ -22,20 +22,25 @@ let noise: AudioBuffer | null = null;
 let out: GainNode | null = null;
 let listening = false;
 
-function create() {
-  if (ctx) return ctx;
-  const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!Ctx) return null;
-  ctx = new Ctx();
-  const len = Math.floor(ctx.sampleRate * 1.2);
-  noise = ctx.createBuffer(1, len, ctx.sampleRate);
-  const data = noise.getChannelData(0);
+function makeNoise(c: BaseAudioContext) {
+  const len = Math.floor(c.sampleRate * 1.2);
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const data = buf.getChannelData(0);
   let last = 0;
   for (let i = 0; i < len; i++) {
     const white = Math.random() * 2 - 1;
     last = (last + 0.06 * white) / 1.06;
     data[i] = last * 3.2 + white * 0.18;
   }
+  return buf;
+}
+
+function create() {
+  if (ctx) return ctx;
+  const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!Ctx) return null;
+  ctx = new Ctx();
+  noise = makeNoise(ctx);
   out = ctx.createGain();
   out.gain.value = 0.9;
   out.connect(ctx.destination);
@@ -62,6 +67,54 @@ export function play(recipe: Recipe | undefined) {
     return;
   }
   recipe({ ctx: c, noise, out, t: c.currentTime + 0.005 });
+}
+
+export interface Cue {
+  /** Seconds from the start. */
+  at: number;
+  recipe: Recipe;
+}
+
+/**
+ * Render a soundtrack without playing it (for the video recorder): the book's music, faded
+ * in at `music.from` and out at the end, under the page sounds at their cue times.
+ */
+export async function renderSoundtrack(opts: {
+  seconds: number;
+  cues: Cue[];
+  music?: { data: ArrayBuffer; from: number; volume: number };
+  sampleRate?: number;
+}): Promise<AudioBuffer> {
+  const rate = opts.sampleRate ?? 48000;
+  const oc = new OfflineAudioContext(2, Math.ceil(opts.seconds * rate), rate);
+  const master = oc.createGain();
+  master.gain.value = 0.9;
+  master.connect(oc.destination);
+
+  if (opts.music) {
+    try {
+      const buf = await oc.decodeAudioData(opts.music.data);
+      const src = oc.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      const g = oc.createGain();
+      const { from, volume } = opts.music;
+      const end = opts.seconds;
+      g.gain.setValueAtTime(0.0001, from);
+      g.gain.linearRampToValueAtTime(volume, from + 2.4);
+      g.gain.setValueAtTime(volume, Math.max(from + 2.4, end - 2));
+      g.gain.linearRampToValueAtTime(0.0001, end);
+      src.connect(g).connect(oc.destination);
+      src.start(from);
+    } catch {
+      /* music the browser cannot decode: page sounds only */
+    }
+  }
+
+  const n = makeNoise(oc);
+  // the recipes only use node factories, which an offline context has too
+  for (const c of opts.cues) c.recipe({ ctx: oc as unknown as AudioContext, noise: n, out: master, t: Math.max(0.001, c.at) });
+  return oc.startRendering();
 }
 
 /* ------------------------------------------------------------------ building blocks */

@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import serviceWorker from './scripts/vite-sw.mjs';
 
 /**
  * Fontsource lists a .woff fallback after every .woff2 slice. Every browser that can run this
@@ -22,7 +23,7 @@ function woff2Only(): { postcssPlugin: string; Declaration: (d: { prop: string; 
 const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
 
 export default defineConfig({
-  plugins: [react() as Plugin[]],
+  plugins: [react() as Plugin[], serviceWorker()],
   // GitHub Pages serves the site under /photo/ (set in .github/workflows/deploy.yml); local dev stays at /
   base: env.BASE_PATH ?? '/',
   server: { port: 5173 },
